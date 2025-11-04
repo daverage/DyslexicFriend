@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dyslexic Friend</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Dyslexic Friend</h1>
+      <section class="control">
+        <label class="switch">
+          <input type="checkbox" id="fontsToggle" />
+          <span class="slider"></span>
+        </label>
+        <div class="control__content">
+          <h2>OpenDyslexic font</h2>
+          <p>Replace page fonts with the OpenDyslexic typeface for improved readability.</p>
+        </div>
+      </section>
+
+      <section class="control">
+        <label class="switch">
+          <input type="checkbox" id="overlayToggle" />
+          <span class="slider"></span>
+        </label>
+        <div class="control__content">
+          <h2>Color overlay</h2>
+          <p>Apply a high-contrast tint that reduces glare while keeping pages interactive.</p>
+
+          <div class="overlay-options">
+            <fieldset>
+              <legend>Recommended hues</legend>
+              <div class="swatches" role="list">
+                <button class="swatch" data-color="#f7f4d8" style="--swatch-color: #f7f4d8" aria-label="Warm cream"></button>
+                <button class="swatch" data-color="#dff1e6" style="--swatch-color: #dff1e6" aria-label="Soft mint"></button>
+                <button class="swatch" data-color="#dae7ff" style="--swatch-color: #dae7ff" aria-label="Calm blue"></button>
+                <button class="swatch" data-color="#fff2cc" style="--swatch-color: #fff2cc" aria-label="Gentle amber"></button>
+              </div>
+            </fieldset>
+            <label class="input-group">
+              <span>Custom color</span>
+              <input type="color" id="overlayColor" value="#f7f4d8" />
+            </label>
+            <label class="input-group">
+              <span>Overlay strength</span>
+              <input type="range" id="overlayOpacity" min="0" max="0.85" step="0.05" />
+              <output id="opacityValue">0%</output>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="control">
+        <label class="switch">
+          <input type="checkbox" id="focusToggle" />
+          <span class="slider"></span>
+        </label>
+        <div class="control__content">
+          <h2>Focus spotlight</h2>
+          <p>Dim the top and bottom of the page to keep attention on the central reading band.</p>
+        </div>
+      </section>
+    </main>
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
