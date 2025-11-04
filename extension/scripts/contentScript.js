@@ -2,8 +2,7 @@ const DEFAULT_SETTINGS = {
   fontsEnabled: true,
   overlayEnabled: false,
   overlayColor: '#f7f4d8',
-  overlayOpacity: 0.25,
-  focusModeEnabled: false
+  overlayOpacity: 0.25
 };
 
 let currentSettings = { ...DEFAULT_SETTINGS };
@@ -11,9 +10,6 @@ let currentSettings = { ...DEFAULT_SETTINGS };
 const FONT_CLASS = 'dyslexic-friend-font';
 const STYLE_ELEMENT_ID = 'dyslexic-friend-style';
 const OVERLAY_ID = 'dyslexic-friend-overlay';
-const FOCUS_OVERLAY_ID = 'dyslexic-friend-focus-overlay';
-const MAX_OVERLAY_OPACITY = 0.85;
-const FOCUS_SHADE_OPACITY = 0.5;
 
 function ensureStyleElement() {
   let styleEl = document.getElementById(STYLE_ELEMENT_ID);
@@ -64,38 +60,8 @@ function ensureOverlayElement() {
       height: '100vh',
       pointerEvents: 'none',
       mixBlendMode: 'multiply',
-      zIndex: '2147483646',
-      transition: 'background-color 0.2s ease, opacity 0.2s ease'
-    });
-    document.documentElement.appendChild(overlay);
-  }
-  return overlay;
-}
-
-function ensureFocusOverlayElement() {
-  let overlay = document.getElementById(FOCUS_OVERLAY_ID);
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = FOCUS_OVERLAY_ID;
-    overlay.setAttribute('aria-hidden', 'true');
-    Object.assign(overlay.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      width: '100vw',
-      height: '100vh',
-      pointerEvents: 'none',
       zIndex: '2147483647',
-      transition: 'opacity 0.2s ease',
-      background: `linear-gradient(
-        to bottom,
-        rgba(17, 24, 39, ${FOCUS_SHADE_OPACITY}) 0%,
-        rgba(17, 24, 39, ${FOCUS_SHADE_OPACITY}) 33%,
-        rgba(17, 24, 39, 0) 40%,
-        rgba(17, 24, 39, 0) 60%,
-        rgba(17, 24, 39, ${FOCUS_SHADE_OPACITY}) 67%,
-        rgba(17, 24, 39, ${FOCUS_SHADE_OPACITY}) 100%
-      )`
+      transition: 'background-color 0.2s ease, opacity 0.2s ease'
     });
     document.documentElement.appendChild(overlay);
   }
@@ -107,29 +73,16 @@ function applyOverlayPreference() {
   const { overlayEnabled, overlayColor, overlayOpacity } = currentSettings;
   if (overlayEnabled && overlayOpacity > 0) {
     overlay.style.backgroundColor = overlayColor;
-    overlay.style.opacity = String(Math.min(Math.max(overlayOpacity, 0), MAX_OVERLAY_OPACITY));
+    overlay.style.opacity = String(Math.min(Math.max(overlayOpacity, 0), 0.6));
     overlay.style.display = 'block';
   } else {
     overlay.style.display = 'none';
   }
 }
 
-function applyFocusPreference() {
-  const existingOverlay = document.getElementById(FOCUS_OVERLAY_ID);
-  if (currentSettings.focusModeEnabled) {
-    const overlay = existingOverlay || ensureFocusOverlayElement();
-    overlay.style.opacity = '1';
-    overlay.style.display = 'block';
-  } else if (existingOverlay) {
-    existingOverlay.style.opacity = '0';
-    existingOverlay.style.display = 'none';
-  }
-}
-
 function applySettings() {
   applyFontPreference();
   applyOverlayPreference();
-  applyFocusPreference();
 }
 
 chrome.runtime.onMessage.addListener((message) => {

@@ -1,11 +1,8 @@
-const MAX_OVERLAY_OPACITY = 0.85;
-
 const DEFAULT_SETTINGS = {
   fontsEnabled: true,
   overlayEnabled: false,
   overlayColor: '#f7f4d8',
-  overlayOpacity: 0.25,
-  focusModeEnabled: false
+  overlayOpacity: 0.25
 };
 
 const fontsToggle = document.getElementById('fontsToggle');
@@ -13,15 +10,10 @@ const overlayToggle = document.getElementById('overlayToggle');
 const overlayColor = document.getElementById('overlayColor');
 const overlayOpacity = document.getElementById('overlayOpacity');
 const opacityValue = document.getElementById('opacityValue');
-const focusToggle = document.getElementById('focusToggle');
-
-if (overlayOpacity) {
-  overlayOpacity.setAttribute('max', String(MAX_OVERLAY_OPACITY));
-}
 const swatches = Array.from(document.querySelectorAll('.swatch'));
 
 function limitOpacity(value) {
-  return Math.min(Math.max(Number.parseFloat(value) || 0, 0), MAX_OVERLAY_OPACITY);
+  return Math.min(Math.max(Number.parseFloat(value) || 0, 0), 0.6);
 }
 
 function formatOpacity(value) {
@@ -30,9 +22,7 @@ function formatOpacity(value) {
 
 function setOverlayControlsDisabled(disabled) {
   overlayColor.disabled = disabled;
-  if (overlayOpacity) {
-    overlayOpacity.disabled = disabled;
-  }
+  overlayOpacity.disabled = disabled;
   swatches.forEach((swatch) => {
     swatch.disabled = disabled;
     swatch.setAttribute('aria-disabled', String(disabled));
@@ -64,15 +54,8 @@ function render(settings) {
   fontsToggle.checked = Boolean(settings.fontsEnabled);
   overlayToggle.checked = Boolean(settings.overlayEnabled);
   overlayColor.value = settings.overlayColor || DEFAULT_SETTINGS.overlayColor;
-  if (overlayOpacity) {
-    overlayOpacity.value = limitOpacity(settings.overlayOpacity);
-  }
-  if (opacityValue) {
-    opacityValue.textContent = formatOpacity(settings.overlayOpacity);
-  }
-  if (focusToggle) {
-    focusToggle.checked = Boolean(settings.focusModeEnabled);
-  }
+  overlayOpacity.value = limitOpacity(settings.overlayOpacity);
+  opacityValue.textContent = formatOpacity(settings.overlayOpacity);
   setOverlayControlsDisabled(!overlayToggle.checked);
 }
 
@@ -96,11 +79,9 @@ function init() {
     persistSettings({ overlayColor: overlayColor.value });
   });
 
-  overlayOpacity?.addEventListener('input', () => {
+  overlayOpacity.addEventListener('input', () => {
     const value = limitOpacity(overlayOpacity.value);
-    if (opacityValue) {
-      opacityValue.textContent = formatOpacity(value);
-    }
+    opacityValue.textContent = formatOpacity(value);
     persistSettings({ overlayOpacity: value });
   });
 
@@ -109,10 +90,6 @@ function init() {
       overlayColor.value = swatch.dataset.color;
       persistSettings({ overlayColor: swatch.dataset.color });
     });
-  });
-
-  focusToggle?.addEventListener('change', () => {
-    persistSettings({ focusModeEnabled: focusToggle.checked });
   });
 }
 
