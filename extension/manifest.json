@@ -1,6 +1,6 @@
 {
-  "name": "Dyslexic Friend",
-  "description": "Assistive tools for dyslexic readers: apply OpenDyslexic fonts and adjustable color overlays.",
+  "name": "Neuro Friendly",
+  "description": "Assistive tools for neurodivergent readers: dyslexia-aware fonts, overlays, focus guides, and sensory supports.",
   "version": "1.0.0",
   "manifest_version": 3,
   "permissions": [
@@ -22,6 +22,16 @@
         "styles/fonts.css"
       ],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "stopwords-iso.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "options_ui": {

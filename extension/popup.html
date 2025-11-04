@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dyslexic Friend</title>
+    <title>Neuro Friendly</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main>
-      <h1>Dyslexic Friend</h1>
+      <h1>Neuro Friendly</h1>
       <section class="control">
         <label class="switch">
           <input type="checkbox" id="fontsToggle" />
@@ -36,13 +36,43 @@
                 <button class="swatch" data-color="#f7f4d8" style="--swatch-color: #f7f4d8" aria-label="Warm cream"></button>
                 <button class="swatch" data-color="#dff1e6" style="--swatch-color: #dff1e6" aria-label="Soft mint"></button>
                 <button class="swatch" data-color="#dae7ff" style="--swatch-color: #dae7ff" aria-label="Calm blue"></button>
-                <button class="swatch" data-color="#fff2cc" style="--swatch-color: #fff2cc" aria-label="Gentle amber"></button>
+                <button class="swatch" data-color="#f9d9ec" style="--swatch-color: #f9d9ec" aria-label="Gentle pink"></button>
+                <button class="swatch" data-color="#fff2cc" style="--swatch-color: #fff2cc" aria-label="Golden amber"></button>
               </div>
             </fieldset>
-            <label class="input-group">
-              <span>Custom color</span>
-              <input type="color" id="overlayColor" value="#f7f4d8" />
-            </label>
+            <fieldset class="custom-color">
+              <legend>Custom color</legend>
+              <div class="custom-color__inputs">
+                <label class="visually-hidden" for="overlayColor">Spectrum color picker</label>
+                <input
+                  type="color"
+                  id="overlayColor"
+                  class="custom-color__picker"
+                  value="#f7f4d8"
+                  aria-describedby="customColorHint"
+                />
+                <div class="custom-color__fields" id="customColorHint">
+                  <label class="custom-color__field">
+                    <span>HEX</span>
+                    <input type="text" id="overlayColorHex" value="#f7f4d8" inputmode="text" maxlength="7" autocomplete="off" />
+                  </label>
+                  <div class="rgb-fields" role="group" aria-label="RGB channels">
+                    <label class="custom-color__field">
+                      <span>R</span>
+                      <input type="number" id="overlayColorRed" min="0" max="255" inputmode="numeric" />
+                    </label>
+                    <label class="custom-color__field">
+                      <span>G</span>
+                      <input type="number" id="overlayColorGreen" min="0" max="255" inputmode="numeric" />
+                    </label>
+                    <label class="custom-color__field">
+                      <span>B</span>
+                      <input type="number" id="overlayColorBlue" min="0" max="255" inputmode="numeric" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
             <label class="input-group">
               <span>Overlay strength</span>
               <input type="range" id="overlayOpacity" min="0" max="0.85" step="0.05" />
@@ -60,6 +90,57 @@
         <div class="control__content">
           <h2>Focus spotlight</h2>
           <p>Dim the top and bottom of the page to keep attention on the central reading band.</p>
+        </div>
+      </section>
+
+      <section class="control">
+        <label class="switch">
+          <input type="checkbox" id="reduceMotionToggle" />
+          <span class="slider"></span>
+        </label>
+        <div class="control__content">
+          <h2>Reduce motion</h2>
+          <p>Pause CSS animations and transitions to lower sensory load for autistic and ADHD readers.</p>
+        </div>
+      </section>
+
+      <section class="control control--stacked">
+        <div class="control__content">
+          <h2 id="focusAnchorsHeading">Focus anchors</h2>
+          <p>Highlight helpful anchors so ADHD readers can scan and re-enter sentences with ease.</p>
+          <div class="control__subgroup" role="group" aria-labelledby="focusAnchorsHeading">
+            <div class="toggle-row">
+              <div class="toggle-row__text">
+                <span class="toggle-row__title">Anchor bolding</span>
+                <span class="toggle-row__hint">Bold the first letters of significant words to create visual footholds.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="anchorToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-row__text">
+                <span class="toggle-row__title">Sentence cues</span>
+                <span class="toggle-row__hint">Tint the first character after punctuation so lines are easier to resume.</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="anchorSentenceToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="control">
+        <label class="switch">
+          <input type="checkbox" id="numberToggle" />
+          <span class="slider"></span>
+        </label>
+        <div class="control__content">
+          <h2>Number highlighting</h2>
+          <p>Give every number a gentle highlight so calculations stand out for dyscalculic thinkers.</p>
         </div>
       </section>
     </main>
