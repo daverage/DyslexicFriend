@@ -37,6 +37,7 @@ const MIN_WORD_LENGTH_TO_BOLD = 4;
 const SENTENCE_PATTERN = /([.!?])\s+(\p{Lu})/gu;
 const INTERACTIVE_SELECTOR = 'a, button, strong, em, [role="button"], [aria-hidden="true"]';
 const TEXT_EXCLUDE_SELECTOR = 'script, style, code, pre, textarea';
+const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
 const LETTER_OR_NUMBER_PATTERN = /[\p{L}\p{N}]/u;
 const LEADING_PUNCTUATION = /^[^\p{L}\p{N}]+/u;
 const TRAILING_PUNCTUATION = /[^\p{L}\p{N}]+$/u;
@@ -464,12 +465,6 @@ function getLanguageCode() {
   return code || DEFAULT_STOPWORD_LANG;
 }
 
-function shouldSkipElement(element) {
-  if (!(element instanceof Element)) return true;
-  if (element.closest(INTERACTIVE_SELECTOR)) return true;
-  return false;
-}
-
 function highlightAnchorsWithStopwords(stopwords, options) {
   const { anchorsEnabled, sentenceHighlightEnabled } = options;
   if (!anchorsEnabled && !sentenceHighlightEnabled) {
@@ -478,133 +473,193 @@ function highlightAnchorsWithStopwords(stopwords, options) {
 
   const stopwordList = Array.isArray(stopwords) ? stopwords : [];
   const stopwordSet = new Set(stopwordList.map((word) => word.toLowerCase()));
-  const textElements = document.querySelectorAll('*:not(script):not(style):not(code):not(pre):not(textarea)');
+  const root = document.body || document.documentElement;
+  if (!root) {
+    return;
+  }
 
-  function highlightAnchors(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent;
-      if (!text?.trim()) return;
+  /**
+   * @param {Text} textNode
+   */
+  function processTextNode(textNode) {
+    const originalText = textNode.textContent;
+    if (!originalText?.trim()) {
+      return;
+    }
 
-      const sentenceStartPositions = new Set();
-      if (sentenceHighlightEnabled) {
-        let match;
-        while ((match = SENTENCE_PATTERN.exec(text)) !== null) {
-          const index = match.index + match[0].length - 1;
-          if (Number.isFinite(index)) {
-            sentenceStartPositions.add(index);
-          }
+    const sentenceStartPositions = new Set();
+    if (sentenceHighlightEnabled) {
+      let match;
+      while ((match = SENTENCE_PATTERN.exec(originalText)) !== null) {
+        const index = match.index + match[0].length - 1;
+        if (Number.isFinite(index)) {
+          sentenceStartPositions.add(index);
         }
-        SENTENCE_PATTERN.lastIndex = 0;
+      }
+      SENTENCE_PATTERN.lastIndex = 0;
+    }
+
+    const parts = originalText.split(/(\s+)/);
+    const wrapper = document.createElement('span');
+    wrapper.className = ANCHOR_WRAPPER_CLASS;
+    wrapper.setAttribute(ANCHOR_WRAPPER_ATTR, originalText);
+
+    let charIndex = 0;
+
+    parts.forEach((part) => {
+      if (/^\s+$/.test(part)) {
+        wrapper.appendChild(document.createTextNode(part));
+        charIndex += part.length;
+        return;
       }
 
-      const parts = text.split(/(\s+)/);
+      const trimmed = part.trim();
+      if (!trimmed) {
+        wrapper.appendChild(document.createTextNode(part));
+        charIndex += part.length;
+        return;
+      }
 
-      const wrapper = document.createElement('span');
-      wrapper.className = ANCHOR_WRAPPER_CLASS;
-      wrapper.setAttribute(ANCHOR_WRAPPER_ATTR, text);
+      if (!LETTER_OR_NUMBER_PATTERN.test(trimmed)) {
+        wrapper.appendChild(document.createTextNode(part));
+        charIndex += part.length;
+        return;
+      }
 
-      let charIndex = 0;
+      const leading = trimmed.match(LEADING_PUNCTUATION)?.[0] ?? '';
+      const trailing = trimmed.match(TRAILING_PUNCTUATION)?.[0] ?? '';
+      const coreStart = leading.length;
+      const coreEnd = trimmed.length - trailing.length;
+      const core = trimmed.slice(coreStart, coreEnd > coreStart ? coreEnd : trimmed.length);
 
-      parts.forEach((part) => {
-        if (/^\s+$/.test(part)) {
-          wrapper.appendChild(document.createTextNode(part));
-          charIndex += part.length;
-          return;
-        }
+      if (!core) {
+        wrapper.appendChild(document.createTextNode(part));
+        charIndex += part.length;
+        return;
+      }
 
-        const trimmed = part.trim();
-        if (!trimmed) {
-          wrapper.appendChild(document.createTextNode(part));
-          charIndex += part.length;
-          return;
-        }
+      const sanitizedLower = core.toLowerCase();
+      const isStopword = sanitizedLower ? stopwordSet.has(sanitizedLower) : false;
+      const highlightStart = sentenceHighlightEnabled && sentenceStartPositions.has(charIndex + leading.length);
+      const canBold = anchorsEnabled && core.length >= MIN_WORD_LENGTH_TO_BOLD && !isStopword;
+      const rawBoldCount = Math.ceil(core.length * 0.4);
+      const boldCount = canBold ? Math.min(core.length, Math.max(rawBoldCount, 1)) : 0;
 
-        if (!LETTER_OR_NUMBER_PATTERN.test(trimmed)) {
-          wrapper.appendChild(document.createTextNode(part));
-          charIndex += part.length;
-          return;
-        }
+      if (leading) {
+        wrapper.appendChild(document.createTextNode(leading));
+      }
 
-        const leading = trimmed.match(LEADING_PUNCTUATION)?.[0] ?? '';
-        const trailing = trimmed.match(TRAILING_PUNCTUATION)?.[0] ?? '';
-        const coreStart = leading.length;
-        const coreEnd = trimmed.length - trailing.length;
-        const core = trimmed.slice(coreStart, coreEnd > coreStart ? coreEnd : trimmed.length);
-
-        if (!core) {
-          wrapper.appendChild(document.createTextNode(part));
-          charIndex += part.length;
-          return;
-        }
-
-        const sanitizedLower = core.toLowerCase();
-        const isStopword = sanitizedLower ? stopwordSet.has(sanitizedLower) : false;
-        const highlightStart = sentenceHighlightEnabled && sentenceStartPositions.has(charIndex + leading.length);
-        const canBold = anchorsEnabled && core.length >= MIN_WORD_LENGTH_TO_BOLD && !isStopword;
-        const rawBoldCount = Math.ceil(core.length * 0.4);
-        const boldCount = canBold ? Math.min(core.length, Math.max(rawBoldCount, 1)) : 0;
-
-        if (leading) {
-          wrapper.appendChild(document.createTextNode(leading));
-        }
-
-        if (!boldCount) {
-          if (highlightStart) {
-            const startSpan = document.createElement('span');
-            startSpan.className = SENTENCE_START_CLASS;
-            startSpan.textContent = core.charAt(0);
-            wrapper.appendChild(startSpan);
-            if (core.length > 1) {
-              wrapper.appendChild(document.createTextNode(core.slice(1)));
-            }
-          } else {
-            wrapper.appendChild(document.createTextNode(core));
-          }
-        } else if (highlightStart) {
+      if (!boldCount) {
+        if (highlightStart) {
           const startSpan = document.createElement('span');
           startSpan.className = SENTENCE_START_CLASS;
           startSpan.textContent = core.charAt(0);
           wrapper.appendChild(startSpan);
-          if (boldCount > 1) {
-            const remainderBold = document.createElement('span');
-            remainderBold.className = ANCHOR_BOLD_CLASS;
-            remainderBold.textContent = core.slice(1, boldCount);
-            wrapper.appendChild(remainderBold);
-          }
-          if (core.length > boldCount) {
-            wrapper.appendChild(document.createTextNode(core.slice(boldCount)));
+          if (core.length > 1) {
+            wrapper.appendChild(document.createTextNode(core.slice(1)));
           }
         } else {
-          const boldSpan = document.createElement('span');
-          boldSpan.className = ANCHOR_BOLD_CLASS;
-          boldSpan.textContent = core.slice(0, boldCount);
-          wrapper.appendChild(boldSpan);
-          if (core.length > boldCount) {
-            wrapper.appendChild(document.createTextNode(core.slice(boldCount)));
-          }
+          wrapper.appendChild(document.createTextNode(core));
         }
-
-        if (trailing) {
-          wrapper.appendChild(document.createTextNode(trailing));
+      } else if (highlightStart) {
+        const startSpan = document.createElement('span');
+        startSpan.className = SENTENCE_START_CLASS;
+        startSpan.textContent = core.charAt(0);
+        wrapper.appendChild(startSpan);
+        if (boldCount > 1) {
+          const remainderBold = document.createElement('span');
+          remainderBold.className = ANCHOR_BOLD_CLASS;
+          remainderBold.textContent = core.slice(1, boldCount);
+          wrapper.appendChild(remainderBold);
         }
+        if (core.length > boldCount) {
+          wrapper.appendChild(document.createTextNode(core.slice(boldCount)));
+        }
+      } else {
+        const boldSpan = document.createElement('span');
+        boldSpan.className = ANCHOR_BOLD_CLASS;
+        boldSpan.textContent = core.slice(0, boldCount);
+        wrapper.appendChild(boldSpan);
+        if (core.length > boldCount) {
+          wrapper.appendChild(document.createTextNode(core.slice(boldCount)));
+        }
+      }
 
-        charIndex += part.length;
-      });
+      if (trailing) {
+        wrapper.appendChild(document.createTextNode(trailing));
+      }
 
-      node.parentNode?.replaceChild(wrapper, node);
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      const element = /** @type {Element} */ (node);
-      if (element.classList.contains(ANCHOR_WRAPPER_CLASS)) return;
-      if (shouldSkipElement(element)) return;
-      Array.from(element.childNodes).forEach((child) => highlightAnchors(child));
+      charIndex += part.length;
+    });
+
+    textNode.parentNode?.replaceChild(wrapper, textNode);
+  }
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!(node instanceof Text)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      const parent = node.parentNode;
+      if (!parent || !(parent instanceof Element)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (!node.textContent || !LETTER_OR_NUMBER_PATTERN.test(node.textContent)) {
+        return NodeFilter.FILTER_SKIP;
+      }
+
+      if (parent.classList.contains(ANCHOR_WRAPPER_CLASS) || parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest(TEXT_EXCLUDE_SELECTOR)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest('nav, header, footer, aside')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest(INTERACTIVE_SELECTOR)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest('input, textarea, select, button, option, optgroup')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest(`.${NUMBER_WRAPPER_CLASS}`)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.isContentEditable || parent.closest('[contenteditable]')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      if (parent.closest('[aria-hidden="true"]')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      const namespace = parent.namespaceURI;
+      if (namespace && namespace !== HTML_NAMESPACE) {
+        return NodeFilter.FILTER_REJECT;
+      }
+
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const nodesToProcess = [];
+  while (walker.nextNode()) {
+    const current = walker.currentNode;
+    if (current instanceof Text) {
+      nodesToProcess.push(current);
     }
   }
 
-  textElements.forEach((element) => {
-    if (!element.closest('nav, header, footer, aside') && !shouldSkipElement(element)) {
-      highlightAnchors(element);
-    }
-  });
+  nodesToProcess.forEach((node) => processTextNode(node));
 }
 
 function applyAnchorHighlightPreference() {
