@@ -23,11 +23,21 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  width: min(440px, 100vw);
+  min-width: 360px;
 }
 
 main {
-  padding: 1rem;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+  max-width: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 h1 {
@@ -48,14 +58,13 @@ p {
 
 .control {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  padding: 0.75rem;
-  box-shadow: 0 1px 4px rgba(26, 36, 59, 0.08);
-  margin-bottom: 1rem;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 10px rgba(26, 36, 59, 0.12);
 }
 
 .control--stacked {
@@ -69,15 +78,15 @@ p {
 
 .control__subgroup {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: 0.85rem;
+  margin-top: 0.85rem;
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .toggle-row__text {
@@ -103,9 +112,9 @@ p {
 .switch {
   position: relative;
   display: inline-block;
-  width: 46px;
-  height: 24px;
-  margin-top: 0.2rem;
+  width: 48px;
+  height: 26px;
+  margin-top: 0.15rem;
 }
 
 .switch input {
@@ -149,7 +158,7 @@ input:checked + .slider:before {
 
 .overlay-options {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 fieldset.custom-color {
@@ -166,8 +175,8 @@ fieldset.custom-color legend {
 
 .custom-color__inputs {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 0.75rem;
+  grid-template-columns: minmax(120px, 0.85fr) minmax(200px, 1.15fr);
+  gap: 1rem;
   align-items: center;
 }
 
@@ -191,14 +200,14 @@ fieldset.custom-color legend {
 
 .custom-color__fields {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .custom-color__field {
   display: grid;
   grid-template-columns: 1.5rem 1fr;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   font-size: 0.75rem;
 }
 
@@ -240,9 +249,9 @@ fieldset.custom-color legend {
 }
 
 fieldset {
-  border: 1px solid rgba(61, 90, 254, 0.2);
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem 0.75rem;
+  border: 1px solid rgba(61, 90, 254, 0.18);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem 0.9rem;
 }
 
 legend {
@@ -253,13 +262,14 @@ legend {
 
 .swatches {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .swatch {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 2px solid rgba(30, 42, 58, 0.2);
   background: var(--swatch-color);
@@ -277,8 +287,19 @@ legend {
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 420px) {
+  body {
+    min-width: 320px;
+    width: 100%;
+  }
+
+  .custom-color__inputs {
+    grid-template-columns: 1fr;
+  }
 }
 
 .input-group input[type='range'] {

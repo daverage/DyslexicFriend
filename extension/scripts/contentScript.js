@@ -92,13 +92,13 @@ function ensureStyleElement() {
         font-weight: 700;
       }
       .${SENTENCE_START_CLASS} {
-        background-color: rgba(200, 200, 0, 0.08);
+        background-color: rgba(160, 214, 255, 0.7);
         border-radius: 2px;
         display: inline;
         padding: 0 1px;
       }
       .${NUMBER_HIGHLIGHT_CLASS} {
-        background-color: rgba(255, 235, 150, 0.35);
+        background-color: rgba(255, 214, 153, 0.7);
         border-radius: 2px;
         padding: 0 1px;
         display: inline;
