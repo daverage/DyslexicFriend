@@ -136,16 +136,16 @@ p {
 }
 
 .slider:before {
-  position: absolute;
-  content: '';
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    content: '';
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 input:checked + .slider {
@@ -174,8 +174,6 @@ fieldset.custom-color legend {
 }
 
 .custom-color__inputs {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.85fr) minmax(200px, 1.15fr);
   gap: 1rem;
   align-items: center;
 }
@@ -204,21 +202,24 @@ fieldset.custom-color legend {
 }
 
 .custom-color__field {
-  display: grid;
-  grid-template-columns: 1.5rem 1fr;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.75rem;
+    display: flex;
+    grid-template-columns: 1.5rem 1fr;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
 }
 
-.custom-color__field input[type='text'],
-.custom-color__field input[type='number'] {
-  border: 1px solid rgba(61, 90, 254, 0.25);
-  border-radius: 8px;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.8rem;
-  color: inherit;
-  background: white;
+.custom-color__field input[type='text'], .custom-color__field input[type='number'] {
+    border: 1px solid rgba(61, 90, 254, 0.25);
+    border-radius: 8px;
+    padding: 5px 2px;
+    font-size: 0.8rem;
+    color: inherit;
+    background: white;
 }
 
 .custom-color__field input[type='number'] {
@@ -249,9 +250,19 @@ fieldset.custom-color legend {
 }
 
 fieldset {
-  border: 1px solid rgba(61, 90, 254, 0.18);
-  border-radius: 12px;
-  padding: 0.75rem 0.9rem 0.9rem;
+border: 1px solid rgba(61, 90, 254, 0.18);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem 0.9rem;
+    max-width: 100%;
+    margin: 0;
+    max-width: min(100%, 250px);
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 legend {
@@ -289,17 +300,6 @@ legend {
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.82rem;
-}
-
-@media (max-width: 420px) {
-  body {
-    min-width: 320px;
-    width: 100%;
-  }
-
-  .custom-color__inputs {
-    grid-template-columns: 1fr;
-  }
 }
 
 .input-group input[type='range'] {
