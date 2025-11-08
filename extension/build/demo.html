@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>EasyType Sans – Demo</title>
+<style>
+  @font-face {
+    font-family: 'EasyType Sans';
+    src: url('EasyTypeSans.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'EasyType Sans';
+    src: url('EasyTypeSans-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+/* Variable font */
+@font-face {
+  font-family: 'EasyType Sans VF';
+  src: url('EasyTypeSans-VF.ttf') format('truetype-variations');
+  font-weight: 400 700;  /* ← RANGE, not a single value */
+  font-style: normal;
+}
+
+  /* Theme vars */
+  :root {
+    --of-bg: #fafafa;
+    --of-fg: #141414;
+    --of-card-bg: #ffffff;
+    --of-card-shadow: rgba(0, 0, 0, .06);
+  }
+
+  body.theme-soft {
+    --of-bg: #fafafa;
+    --of-fg: #141414;
+  }
+
+  body.theme-high {
+    --of-bg: #ffffff;
+    --of-fg: #000000;
+  }
+
+  body.theme-dark {
+    --of-bg: #05070b;
+    --of-fg: #f5f6ff;
+    --of-card-bg: #111320;
+    --of-card-shadow: rgba(0, 0, 0, .7);
+  }
+
+  body.theme-sepia {
+    --of-bg: #f3e5c8;
+    --of-fg: #3b2913;
+  }
+
+  body {
+    font-family: 'EasyType Sans', system-ui, -apple-system, 'Noto Sans', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--of-fg);
+    background: var(--of-bg);
+    max-width: 70ch;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-size: 1.9rem;
+    margin-bottom: .25rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    margin: 1.5rem 0 .25rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-weight: 600;
+    color: #444;
+  }
+
+  body.theme-dark h2 {
+    color: #d3d7ff;
+  }
+
+  .card {
+    background: var(--of-card-bg);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 8px var(--of-card-shadow);
+    margin-top: 1rem;
+  }
+
+  .sample {
+    margin-top: .5rem;
+  }
+
+  .note {
+    font-size: .8rem;
+    color: #666;
+    margin-top: .6rem;
+  }
+
+  body.theme-dark .note {
+    color: #9aa1d6;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem 1.5rem;
+    align-items: center;
+    font-size: .85rem;
+    margin-bottom: .5rem;
+  }
+
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .controls input[type=range] {
+    width: 160px;
+  }
+
+  .controls select {
+    font-size: .85rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  body.theme-dark .controls select {
+    background: #171a2a;
+    color: #f5f6ff;
+    border-color: #333;
+  }
+
+  /* Rhythmic reading – entry emphasis + beat grouping */
+  .of-word {
+    position: relative;
+    padding-inline: 0.02em;
+  }
+
+  .of-word .of-entry {
+    font-weight: 600;
+  }
+
+  .of-word .of-tail {
+    opacity: 0.96;
+  }
+
+  .of-word.of-beat {
+    letter-spacing: 0.01em;
+  }
+
+  .of-word.of-beat .of-entry {
+    font-weight: 700;
+  }
+
+  .of-word.of-beat .of-tail {
+    opacity: 0.92;
+  }
+</style>
+
+<h1>EasyType Sans – FLOW anchoring + spacing</h1>
+
+<div class="card">
+  <h2>EasyType Sans (Regular + Bold)</h2>
+  <p class="sample">
+    AVATAR WAFFLE MIX QUICKLY JUMPS OVER BOLD FROGS. Fixing kerning requires observing pairs like VA, Ta, We, To, Yo,
+    and adjusting spacing around narrow letters such as i, l, and r. Watch for collisions in combinations like ff, fi,
+    fl, fj, and fj. Lowercase words like minimum, illumination, and millennium expose rhythm. 0123456789 ! ? . , : ; – —
+    “ ” « » ( ) [ ] {{ }} $ € £ ¥ % ‰ + – × ÷ = ≠ &lt; &gt; ~ ^ Franz jagt im komplett verwahrlosten Taxi quer durch
+    Bayern. Portez ce vieux whisky au juge blond qui fume. Zażółć gęślą jaźń. El pingüino Wenceslao hizo kilómetros bajo
+    frío extremo. Pijamalı hasta yağız şoföre çabucak güvendi.
+  </p>
+  <p class="sample">
+    This is <strong>bold EasyType text</strong>, this is <em>italic EasyType text</em>,
+    and this is <strong><em>bold italic EasyType text</em></strong>.
+  </p>
+  <div class="note">Noto-based, with entry anchoring + comfort spacing + micro-spacing.</div>
+</div>
+<div class="card" style="font-family:'EasyType Sans VF', system-ui, sans-serif;">
+  <h2>EasyType Sans VF – FLOW / WGHT + rhythm</h2>
+<div class="controls">
+  <label>
+    FLOW
+    <input id="flowSlider" type="range" min="0" max="100" value="60">
+    <span id="flowLabel">0.60</span>
+  </label>
+  <label>
+    Weight
+    <input id="wghtSlider" type="range" min="0" max="100" value="33">
+    <span id="wghtLabel">499</span>
+  </label>
+  <label>
+    Words / beat
+    <input id="beatSlider" type="range" min="1" max="6" value="4">
+    <span id="beatLabel">4</span>
+  </label>
+  <label>
+    Entry emphasis
+    <input id="entrySlider" type="range" min="20" max="60" value="35">
+    <span id="entryLabel">35%</span>
+  </label>
+  <label>
+    <input id="strongToggle" type="checkbox" checked>
+    Honour <strong>strong</strong>
+  </label>
+  <label>
+    Theme
+    <select id="themeSelect">
+      <option value="soft">Soft</option>
+      <option value="high">High contrast</option>
+      <option value="dark">Dark</option>
+      <option value="sepia">Sepia</option>
+    </select>
+  </label>
+</div>
+
+  <div class="sample" id="vfSample" data-easytype>
+    <p>
+    AVATAR WAFFLE MIX QUICKLY JUMPS OVER BOLD FROGS. Fixing kerning requires observing pairs like VA, Ta, We, To, Yo,
+    and adjusting spacing around narrow letters such as i, l, and r. Watch for collisions in combinations like ff, fi,
+    fl, fj, and fj. Lowercase words like minimum, illumination, and millennium expose rhythm. 0123456789 ! ? . , : ; – —
+    “ ” « » ( ) [ ] {{ }} $ € £ ¥ % ‰ + – × ÷ = ≠ &lt; &gt; ~ ^ Franz jagt im komplett verwahrlosten Taxi quer durch
+    Bayern. Portez ce vieux whisky au juge blond qui fume. Zażółć gęślą jaźń. El pingüino Wenceslao hizo kilómetros bajo
+    frío extremo. Pijamalı hasta yağız şoföre çabucak güvendi.
+  </p>
+  <p class="sample" data-easytype>
+    This line shows the <strong>FLOW reading method</strong>: entry strokes are slightly emphasised
+    and beats of words are grouped rhythmically, purely via typographic contrast.
+  </p>
+    <p class="sample" data-easytype>
+    This is <strong>bold baseline text</strong>, this is <em>italic baseline text</em>,
+    and this is <strong><em>bold italic baseline text</em></strong>.
+  </p>
+  </div>
+  <div class="note">
+    FLOW axis controls entry-anchoring strength (per word). WGHT axis interpolates Regular → Medium → Bold.
+    Rhythm engine groups words into beats and boosts FLOW on those anchor words.
+  </div>
+</div>
+<div class="card" style="font-family:'Noto Sans', system-ui, sans-serif;">
+  <h2>Noto Sans baseline (Regular + Bold)</h2>
+  <p class="sample">
+    AVATAR WAFFLE MIX QUICKLY JUMPS OVER BOLD FROGS. Fixing kerning requires observing pairs like VA, Ta, We, To, Yo,
+    and adjusting spacing around narrow letters such as i, l, and r. Watch for collisions in combinations like ff, fi,
+    fl, fj, and fj. Lowercase words like minimum, illumination, and millennium expose rhythm. 0123456789 ! ? . , : ; – —
+    “ ” « » ( ) [ ] {{ }} $ € £ ¥ % ‰ + – × ÷ = ≠ &lt; &gt; ~ ^ Franz jagt im komplett verwahrlosten Taxi quer durch
+    Bayern. Portez ce vieux whisky au juge blond qui fume. Zażółć gęślą jaźń. El pingüino Wenceslao hizo kilómetros bajo
+    frío extremo. Pijamalı hasta yağız şoföre çabucak güvendi.
+  </p>
+  <p class="sample">
+    This is <strong>bold baseline text</strong>, this is <em>italic baseline text</em>,
+    and this is <strong><em>bold italic baseline text</em></strong>.
+  </p>
+  <div class="note">Unmodified Noto Sans (Regular/Bold) for comparison.</div>
+</div>
+<script>
+/* FLOW reading engine – rhythm + optional strong emphasis, structure-safe */
+(function (window, document) {
+  "use strict";
+
+  const EasyType = {};
+  window.EasyType = EasyType;
+
+  // optional: strip simple leading/trailing punctuation so it doesn't get bolded
+  function splitPunctuation(word) {
+    const m = word.match(/^([\(\[\{“"']*)(.*?)([\)\]\}”"']*)$/u);
+    if (!m) return { lead: "", core: word, trail: "" };
+    return { lead: m[1] || "", core: m[2] || "", trail: m[3] || "" };
+  }
+
+  EasyType.applyRhythm = function applyRhythm(root, opts = {}) {
+    if (!root) return;
+
+    const beatSize        = opts.beatSize || 4;
+    const entryFrac       = opts.entryFrac ?? 0.35;
+    const flowBase        = opts.flowBase ?? 0.6;     // 0–1
+    const flowBoostBeat   = opts.flowBoost ?? 0.15;
+    const flowBoostStrong = opts.strongFlowBoost ?? 0.08;
+    const wghtBase        = opts.wghtBase ?? 450;     // 400–700
+    const wghtBoostBeat   = opts.beatWghtBoost ?? 40;
+    const wghtBoostStrong = opts.strongWghtBoost ?? 80;
+    const respectStrong   = !!opts.respectStrong;
+
+    // Reset to pristine markup on every call
+    const original = root.__ofOriginalHTML || root.innerHTML;
+    if (!root.__ofOriginalHTML) root.__ofOriginalHTML = original;
+    root.innerHTML = original;
+
+    // Collect all text nodes first so DOM edits don't confuse the walker
+    const walker = document.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    const textNodes = [];
+    let n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+
+    let wordIndex = 0;
+
+    function wrapTextNode(node) {
+      const parent = node.parentElement;
+      const isStrong = !!(parent && parent.closest("strong,b"));
+      const isEm     = !!(parent && parent.closest("em,i"));
+
+      const frag = document.createDocumentFragment();
+      const parts = node.nodeValue.split(/(\s+)/);
+
+      parts.forEach(tok => {
+        if (!tok) return;
+        if (/^\s+$/.test(tok)) {
+          frag.appendChild(document.createTextNode(tok));
+          return;
+        }
+
+        const { lead, core, trail } = splitPunctuation(tok);
+        const word = core || tok;
+
+        const spanWord = document.createElement("span");
+        spanWord.className = "of-word";
+
+        const isBeat = (wordIndex % beatSize) === 0;
+        if (isBeat) spanWord.classList.add("of-beat");
+        if (isStrong) spanWord.classList.add("of-strong");
+        if (isEm) spanWord.classList.add("of-em");
+
+        const entrySpan = document.createElement("span");
+        const tailSpan  = document.createElement("span");
+        entrySpan.className = "of-entry";
+        tailSpan.className  = "of-tail";
+
+        const len = Math.max(1, Math.round(word.length * entryFrac));
+        entrySpan.textContent = word.slice(0, len);
+        tailSpan.textContent  = word.slice(len);
+
+        if (lead) spanWord.appendChild(document.createTextNode(lead));
+        spanWord.append(entrySpan, tailSpan);
+        if (trail) spanWord.appendChild(document.createTextNode(trail));
+
+        // FLOW axis: base + beat + strong
+        let flow = flowBase;
+        if (isBeat) flow += flowBoostBeat;
+        if (respectStrong && isStrong) flow += flowBoostStrong;
+        flow = Math.max(0, Math.min(1, flow));
+
+        // WGHT axis: base + beat + strong
+        let wght = wghtBase;
+        if (isBeat) wght += wghtBoostBeat;
+        if (respectStrong && isStrong) wght += wghtBoostStrong;
+        wght = Math.max(400, Math.min(700, wght));
+
+        spanWord.style.fontVariationSettings =
+          `'wght' ${wght.toFixed(0)}, 'FLOW' ${flow.toFixed(2)}`;
+
+        frag.appendChild(spanWord);
+        wordIndex++;
+      });
+
+      node.parentNode.replaceChild(frag, node);
+    }
+
+    textNodes.forEach(wrapTextNode);
+  };
+})(window, document);
+
+
+/* UI wiring */
+(function () {
+  const flowSlider   = document.getElementById('flowSlider');
+  const wghtSlider   = document.getElementById('wghtSlider');
+  const beatSlider   = document.getElementById('beatSlider');
+  const entrySlider  = document.getElementById('entrySlider');
+  const strongToggle = document.getElementById('strongToggle');
+  const themeSelect  = document.getElementById('themeSelect');
+
+  const flowLabel  = document.getElementById('flowLabel');
+  const wghtLabel  = document.getElementById('wghtLabel');
+  const beatLabel  = document.getElementById('beatLabel');
+  const entryLabel = document.getElementById('entryLabel');
+
+  const vfSample = document.getElementById('vfSample');
+
+  function updateTheme() {
+    const val = themeSelect.value || "soft";
+    document.body.className = "";
+    document.body.classList.add("theme-" + val);
+  }
+
+  function updateRhythm() {
+    const beatSize  = parseInt(beatSlider.value, 10) || 4;
+    const entryFrac = (parseInt(entrySlider.value, 10) / 100) || 0.35;
+    const flowBase  = parseInt(flowSlider.value, 10) / 100;  // 0–1
+    const wghtBase  = 400 + (700 - 400) * (parseInt(wghtSlider.value, 10) / 100);
+
+    flowLabel.textContent  = flowBase.toFixed(2);
+    wghtLabel.textContent  = Math.round(wghtBase);
+    beatLabel.textContent  = beatSize;
+    entryLabel.textContent = `${Math.round(entryFrac * 100)}%`;
+
+    EasyType.applyRhythm(vfSample, {
+      beatSize,
+      entryFrac,
+      flowBase,
+      flowBoost: entryFrac * 0.4,      // beats get more anchoring
+      strongFlowBoost: entryFrac * 0.3,
+      wghtBase,
+      beatWghtBoost: 40,               // beats slightly heavier
+      strongWghtBoost: 80,             // strong even heavier
+      respectStrong: strongToggle.checked
+    });
+  }
+
+  [flowSlider, wghtSlider, beatSlider, entrySlider, strongToggle]
+    .forEach(el => el && el.addEventListener('input', updateRhythm));
+
+  themeSelect.addEventListener('change', updateTheme);
+
+  if (!document.body.className) document.body.classList.add("theme-soft");
+  updateTheme();
+  updateRhythm();
+})();
+</script>
+
+
+
+
+
+</html>

@@ -14,24 +14,42 @@
   font-display: swap;
 }
 
+/* === Base Theme === */
 :root {
   color-scheme: light;
-  font-family: 'OpenDyslexic', 'OpenDyslexicAlta', 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #f0f4ff;
   color: #1e2a3a;
 }
 
 body {
   margin: 0;
-  width: min(440px, 100vw);
-  min-width: 360px;
+  width: min(540px, 100vw);
+  min-width: 500px;
+  min-height: 500px;
+  font-family: inherit;
 }
 
 main {
+  max-height: clamp(360px, 85vh, 640px);
+  min-height: 500px;
+  overflow-y: auto;
+  padding-right: 12px; /* avoid scrollbar overlap */
   padding: 1.25rem;
   display: grid;
   gap: 1.25rem;
   max-width: 100%;
+}
+
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+body.popup-font-dyslexic,
+body.popup-font-dyslexic * {
+  font-family: 'OpenDyslexic', 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 *,
@@ -40,6 +58,7 @@ main {
   box-sizing: border-box;
 }
 
+/* === Typography === */
 h1 {
   font-size: 1.4rem;
   margin: 0 0 0.5rem;
@@ -56,6 +75,7 @@ p {
   line-height: 1.4;
 }
 
+/* === Core Control Blocks === */
 .control {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -76,12 +96,65 @@ p {
   flex-direction: column;
 }
 
-.control__subgroup {
-  display: grid;
-  gap: 0.85rem;
-  margin-top: 0.85rem;
+.control__note {
+  font-size: 0.75rem;
+  color: rgba(30, 42, 58, 0.7);
+  margin-top: 0.75rem;
 }
 
+.anchor-color-fieldset {
+  margin: 0;
+  border: 1px solid rgba(30, 42, 58, 0.12);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.anchor-color-fieldset legend {
+  font-size: 0.75rem;
+  padding: 0 0.4rem;
+  color: rgba(30, 42, 58, 0.7);
+}
+
+.anchor-color-fieldset[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.anchor-color-fieldset[aria-disabled="true"] .swatch {
+  pointer-events: none;
+}
+
+.anchor-color-swatches {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.anchor-color-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.popup-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-controls__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(30, 42, 58, 0.7);
+}
+
+.control__subgroup {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* === Toggle Rows === */
 .toggle-row {
   display: flex;
   align-items: center;
@@ -105,15 +178,13 @@ p {
   color: rgba(30, 42, 58, 0.75);
 }
 
-.toggle-row .switch {
-  margin-top: 0;
-}
-
+/* === Switch Styling === */
 .switch {
   position: relative;
   display: inline-block;
-  width: 48px;
-  height: 26px;
+  /* Enforce a consistent, slightly roomier switch size so all toggles look the same */
+  width: 52px;
+  height: 30px;
   margin-top: 0.15rem;
 }
 
@@ -135,27 +206,49 @@ p {
   border-radius: 34px;
 }
 
-.slider:before {
-    position: absolute;
-    content: '';
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.3s;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+/* Stronger normalization to prevent a single toggle from rendering narrower due to layout context */
+.switch,
+.switch .slider {
+  box-sizing: border-box;
+  min-width: 52px;
+  min-height: 30px;
 }
 
-input:checked + .slider {
+.switch {
+  display: inline-grid;
+  place-items: center;
+}
+
+.slider {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.slider:before {
+  position: absolute;
+  content: '';
+  /* knob size matches switch height with a bit of padding */
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+input:checked+.slider {
   background-color: #3d5afe;
 }
 
-input:checked + .slider:before {
-  transform: translateX(22px);
+input:checked+.slider:before {
+  /* move knob to the right edge, accounting for knob width and padding */
+  left: calc(100% - 26px);
 }
 
+/* === Overlay Controls === */
 .overlay-options {
   display: grid;
   gap: 0.75rem;
@@ -174,8 +267,10 @@ fieldset.custom-color legend {
 }
 
 .custom-color__inputs {
+  display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .custom-color__picker {
@@ -202,24 +297,20 @@ fieldset.custom-color legend {
 }
 
 .custom-color__field {
-    display: flex;
-    grid-template-columns: 1.5rem 1fr;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.75rem;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
 }
 
-.custom-color__field input[type='text'], .custom-color__field input[type='number'] {
-    border: 1px solid rgba(61, 90, 254, 0.25);
-    border-radius: 8px;
-    padding: 5px 2px;
-    font-size: 0.8rem;
-    color: inherit;
-    background: white;
+.custom-color__field input[type='text'],
+.custom-color__field input[type='number'] {
+  border: 1px solid rgba(61, 90, 254, 0.25);
+  border-radius: 8px;
+  padding: 5px 2px;
+  font-size: 0.8rem;
+  color: inherit;
+  background: white;
 }
 
 .custom-color__field input[type='number'] {
@@ -237,6 +328,176 @@ fieldset.custom-color legend {
   gap: 0.5rem;
 }
 
+.swatches {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+
+.swatch.selected {
+  outline: 2px solid #2b7cff;
+  transform: translateY(-1px);
+}
+
+.swatch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(2,6,23,0.12);
+}
+
+.btn.active, .btn.active:focus, .btn.active:hover { background:#e8f1ff; border-color:#c9e0ff; }
+.swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(30, 42, 58, 0.2);
+  background: var(--swatch-color);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+/* Tab buttons in the header */
+.nf-tabs .tab-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
+}
+.nf-tabs .tab-btn:focus-visible {
+  outline: 3px solid rgba(61,90,254,0.18);
+}
+.nf-tabs .tab-btn.active {
+  background: #eef4ff;
+  border-color: rgba(61,90,254,0.18);
+  transform: translateY(-1px);
+}
+
+.swatch:focus-visible,
+.swatch:hover {
+  outline: none;
+  border-color: #3d5afe;
+  transform: translateY(-1px);
+}
+
+/* === Input Groups === */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+}
+
+.input-group input[type='range'],
+.input-group input[type='number'],
+.input-group select {
+  width: 100%;
+  accent-color: #3d5afe;
+  border-radius: 6px;
+  border: 1px solid rgba(61, 90, 254, 0.25);
+  background: white;
+}
+.input-group select {
+  padding: 4px 6px;
+  font-size: 0.82rem;
+  color: inherit;
+}
+.input-group input[type='number'] {
+
+  padding: 4px 6px;
+
+}
+.input-group--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+}
+.input-group--inline span {
+  flex: 0 0 auto;
+}
+.input-group--inline select {
+  flex: 1 1 auto;
+}
+#overlay-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  align-items: flex-start;
+}
+
+/* Typography grid: keep the three inputs compact rather than full-width */
+.typography-grid {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.typography-input {
+  width: 7.5rem;
+}
+
+.typography-actions {
+  margin-top: 0.5rem;
+}
+
+/* Small button styles */
+.btn {
+  font-size: 0.85rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(30, 42, 58, 0.08);
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.btn--secondary {
+  background: #f5f7ff;
+  color: #1e2a3a;
+  border-color: rgba(61, 90, 254, 0.12);
+}
+
+/* Log panel styling */
+/* Responsive: on very narrow popups make the controls stack */
+@media (max-width: 380px) {
+  .typography-grid {
+    flex-direction: column;
+  }
+
+  .typography-input {
+    width: 100%;
+  }
+}
+
+#opacityValue {
+  font-weight: bold;
+  text-align: right;
+}
+
+/* === Fieldsets === */
+fieldset {
+  border: 1px solid rgba(61, 90, 254, 0.18);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem 0.9rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+legend {
+  font-size: 0.75rem;
+  padding: 0 0.25rem;
+  opacity: 0.8;
+}
+
+/* === Accessibility & UX === */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -249,65 +510,38 @@ fieldset.custom-color legend {
   border: 0;
 }
 
-fieldset {
-border: 1px solid rgba(61, 90, 254, 0.18);
-    border-radius: 12px;
-    padding: 0.75rem 0.9rem 0.9rem;
-    max-width: 100%;
-    margin: 0;
-    max-width: min(100%, 250px);
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-content: center;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+/* Disabled form control look for consistency */
+input[disabled],
+input[aria-disabled="true"] {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
-legend {
-  font-size: 0.75rem;
-  padding: 0 0.25rem;
-  opacity: 0.8;
+/* === New Enhancements for Extended Features === */
+.control h2+p+.control__subgroup {
+  margin-top: 0.5rem;
 }
 
-.swatches {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.35rem;
-  flex-wrap: wrap;
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  opacity: 0.6;
 }
 
-.swatch {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid rgba(30, 42, 58, 0.2);
-  background: var(--swatch-color);
-  cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+.control__subgroup label.input-group span {
+  font-size: 0.8rem;
+  color: rgba(30, 42, 58, 0.8);
 }
 
-.swatch:focus-visible,
-.swatch:hover {
-  outline: none;
-  border-color: #3d5afe;
-  transform: translateY(-1px);
+/* subtle divider for long pages */
+section.control:not(:last-of-type)::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: rgba(61, 90, 254, 0.1);
+  margin-top: 1rem;
 }
 
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.82rem;
-}
-
-.input-group input[type='range'] {
-  width: 100%;
-  accent-color: #3d5afe;
-}
-
-#opacityValue {
-  font-weight: bold;
-  text-align: right;
+/* small hover hint for advanced toggles */
+.toggle-row__text:hover .toggle-row__hint {
+  color: rgba(30, 42, 58, 1);
 }

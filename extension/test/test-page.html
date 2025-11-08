@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neuro Friendly Test Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+        background: #f8fafc;
+        color: #1f2933;
+      }
+
+      body {
+        margin: 0;
+        padding: 2rem;
+        display: grid;
+        gap: 2rem;
+        background-image: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(3, 105, 161, 0.08) 100%);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 0.75rem;
+      }
+
+      section {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 15px 30px -20px rgba(15, 23, 42, 0.4);
+        display: grid;
+        gap: 1.25rem;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .card {
+        border-radius: 14px;
+        padding: 1.5rem;
+        display: grid;
+        gap: 0.75rem;
+        line-height: 1.5;
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .card p {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .card--dark {
+        background: #111827;
+        color: #f8fafc;
+      }
+
+      .card--accent {
+        background: #fee2e2;
+        color: #7f1d1d;
+      }
+
+      .card--cool {
+        background: #e0f2fe;
+        color: #0f172a;
+      }
+
+      .card--warm {
+        background: #fef3c7;
+        color: #78350f;
+      }
+
+      .card--muted {
+        background: #f5f5f5;
+        color: #374151;
+      }
+
+      .card--mono {
+        background: #1f2933;
+        color: #cbd5f5;
+        font-family: "Courier New", monospace;
+      }
+
+      .card--gradient {
+        background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+        color: #fff7ed;
+      }
+
+      .card--shadow {
+        background: #ffffff;
+        color: #1f2933;
+        box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.1), 0 25px 50px -25px rgba(30, 64, 175, 0.55);
+      }
+
+      .card--pattern {
+        background:
+          radial-gradient(circle at 20px 20px, rgba(0, 0, 0, 0.08) 2px, transparent 0) 0 0/40px 40px,
+          linear-gradient(135deg, #e0f2fe 0%, #fdf2f8 100%);
+        color: #0f172a;
+      }
+
+      .card--contrast a {
+        color: #2563eb;
+        font-weight: 600;
+      }
+
+      .card--contrast strong {
+        color: #111827;
+      }
+
+      .card--serif {
+        background: #fdf2f8;
+        color: #831843;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.05rem;
+      }
+
+      .sentences {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .sentences p {
+        margin: 0;
+      }
+
+      .numbers {
+        display: grid;
+        gap: 0.75rem;
+        font-feature-settings: "tnum";
+      }
+
+      .numbers span {
+        display: inline-block;
+        min-width: 120px;
+      }
+
+      .media-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+
+      .media-grid figure {
+        margin: 0;
+        background: rgba(15, 23, 42, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+
+      .media-grid figcaption {
+        font-size: 0.9rem;
+        color: rgba(15, 23, 42, 0.8);
+      }
+
+      .playing-video {
+        width: 100%;
+        border-radius: 12px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.95rem;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      thead {
+        background: #1d4ed8;
+        color: #f8fafc;
+      }
+
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+      }
+
+      tbody tr:nth-child(even) {
+        background: rgba(209, 213, 219, 0.35);
+      }
+
+      .contrast-demo {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .contrast-demo .swatch {
+        border-radius: 12px;
+        padding: 1rem;
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .swatch--dark-on-light {
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .swatch--light-on-dark {
+        background: #111827;
+        color: #f8fafc;
+      }
+
+      .swatch--mid-on-mid {
+        background: #cbd5f5;
+        color: #1e3a8a;
+      }
+
+      .swatch--gradient {
+        background: radial-gradient(circle at top, #f97316, #c026d3);
+        color: #fdf2f8;
+      }
+
+      @media (max-width: 700px) {
+        body {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section aria-labelledby="headlines">
+      <div class="grid-2">
+        <article class="card card--dark">
+          <h3 id="headlines">Nightfall Chronicle</h3>
+          <p>
+            The Nightfall Chronicle covers the quiet burst of community activity that happens once the sun goes down: late-night makers
+            finishing passion projects, neighbours running mutual-aid drop-offs, and students testing their first public build.
+          </p>
+          <p>
+            This week’s spotlight follows a volunteer-led transit monitor who maps real-time accessibility issues so commuters can reroute
+            quickly. The project began as a shared spreadsheet and has now grown into a maintained open dataset.
+          </p>
+        </article>
+
+        <article class="card card--accent">
+          <h3>Rose Mist Edition</h3>
+          <p>
+            The Rose Mist Edition explores how small rituals—watering plants at dawn, writing a single gratitude entry, sharing a voice
+            memo—can anchor a morning. Readers contributed their own routines, and the three most helpful entries earned cover placement.
+          </p>
+          <p>
+            This issue also debuts a serialized short story about intergenerational gardeners. Each chapter includes practical tips pulled
+            from horticulture researchers alongside fictional narrative beats.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="lorem-contrast">
+      <h2 id="lorem-contrast">Contrast Variations</h2>
+      <div class="grid-2">
+        <article class="card card--cool">
+          <h3>Oceanic Depths</h3>
+          <p>
+            Marine biologist Dr. Isa Peña documents how seagrass meadows act as underwater nurseries for juvenile fish and trap surprising
+            amounts of carbon. The story includes field recordings so readers can hear the ambient clicks and hums of the habitat.
+          </p>
+          <p>
+            A companion infographic illustrates how community-led reef monitoring in the Philippines has doubled species counts in under two
+            years, thanks to low-cost sensors and volunteer divers.
+          </p>
+        </article>
+
+        <article class="card card--warm">
+          <h3>Golden Hour</h3>
+          <p>
+            Photographer Reema Shah explains how to balance colour temperatures when shooting sunsets in cities where glass towers bounce light
+            in unexpected directions. Her tips rely on inexpensive gear and quick adjustments rather than hours of post-production.
+          </p>
+          <p>
+            Readers submitted before-and-after clips showing how a 10-minute walk at dusk improves their mood. A counsellor comments on why low
+            stakes movement can unlock reflection.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sentences">
+      <h2 id="sentences">Mixed Sentences</h2>
+      <div class="sentences">
+        <p style="font-size: 1.05rem; color: #0f172a;">
+          What happens when neighbourhood libraries lend out musical instruments alongside books? Patrons write in to say the shared drum kits
+          spark pop-up jam sessions in the plaza.
+        </p>
+        <p style="font-size: 1.05rem; color: #f9fafb; background:#111827; padding:0.75rem 1rem; border-radius:12px;">
+          Could quick texture sketches help engineers communicate ideas? One design team now starts sprint reviews with two-minute drawing warm
+          ups and reports fewer misunderstandings.
+        </p>
+        <p style="font-size: 1.1rem; color:#1b1b38; background:#ede9fe; padding:0.75rem 1rem; border-radius:12px;">
+          When students co-create rubrics, grading anxiety drops. Educator Mallory Hu tracked a 30% rise in revision submissions after testing
+          the approach.
+        </p>
+        <p style="font-size:1.05rem; color:#0c4a6e;">
+          Field naturalist Amir Wheeler reminds us to look down: the city’s tiniest pollinators live in sidewalk cracks where microclover
+          thrives.
+        </p>
+      </div>
+    </section>
+
+    <section aria-labelledby="numbers">
+      <h2 id="numbers">Numbers & Data</h2>
+      <div class="numbers">
+        <p><span style="font-weight:600; color:#1e293b;">Community Repair Fund</span> $12,749.75 raised</p>
+        <p><span style="font-weight:600; color:#4c1d95;">Tool Library Loans</span> 17,432 checkouts</p>
+        <p><span style="font-weight:600; color:#166534;">Workshop Completion</span> 96.4% of attendees</p>
+        <p><span style="font-weight:600; color:#7c2d12;">Support Queue</span> 1,203 open requests</p>
+        <p><span style="font-weight:600; color:#1f2937;">Device Mix</span> 8,123 / 12,450 / 19,873 units</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="media">
+      <h2 id="media">Media & Motion</h2>
+      <div class="media-grid">
+        <figure>
+          <video class="playing-video" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" autoplay muted loop></video>
+          <figcaption>
+            Autoplaying muted video for motion-reduction testing. Toggling motion preferences should pause or prevent playback.
+          </figcaption>
+        </figure>
+        <figure>
+          <audio controls>
+            <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+          <figcaption>
+            Audio control to verify autoplay-blocking and sensory settings.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="tables">
+      <h2 id="tables">Data Table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Region</th>
+            <th scope="col">Quarter 1</th>
+            <th scope="col">Quarter 2</th>
+            <th scope="col">Quarter 3</th>
+            <th scope="col">Quarter 4</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Orion Notebook</td>
+            <td>North America</td>
+            <td>12,948</td>
+            <td>15,327</td>
+            <td>16,870</td>
+            <td>17,452</td>
+          </tr>
+          <tr>
+            <td>Lyra Tablet</td>
+            <td>Europe</td>
+            <td>9,432</td>
+            <td>10,987</td>
+            <td>11,452</td>
+            <td>13,004</td>
+          </tr>
+          <tr>
+            <td>Aurora Phone</td>
+            <td>Asia Pacific</td>
+            <td>19,587</td>
+            <td>21,978</td>
+            <td>23,564</td>
+            <td>24,003</td>
+          </tr>
+          <tr>
+            <td>Vega Monitor</td>
+            <td>Latin America</td>
+            <td>4,873</td>
+            <td>5,276</td>
+            <td>5,932</td>
+            <td>6,184</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section aria-labelledby="contrast">
+      <h2 id="contrast">Anchor Contrast Playground</h2>
+      <div class="contrast-demo">
+        <div class="swatch swatch--dark-on-light">
+          <strong>Dark on Light</strong>
+          <p>The classic dark-text-on-light-background pairing consistently scores highest for reading speed in eye-tracking studies.</p>
+          <p>Designers often add a faint border or drop shadow to help separate content blocks without sacrificing clarity.</p>
+        </div>
+        <div class="swatch swatch--light-on-dark">
+          <strong>Light on Dark</strong>
+          <p>Light text on a deep background works well for immersive dashboards when the surrounding room is dim or the viewer is fatigued.</p>
+          <p>A lower absolute luminance reduces glare, but designers must check contrast to avoid washed-out details.</p>
+        </div>
+        <div class="swatch swatch--mid-on-mid">
+          <strong>Mid-tone on Mid-tone</strong>
+          <p>Mid-tone combinations are tricky; they rely on texture and font weight to remain legible.</p>
+          <p>Adding a subtle outline or alternating background stripes can make these palettes more accessible.</p>
+        </div>
+        <div class="swatch swatch--gradient">
+          <strong>Gradient Background</strong>
+          <p>Gradient surfaces need deliberate anchor colours; contrasting hues in focal zones keep text visible as colours shift.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="serif">
+      <h2 id="serif">Typography Mix</h2>
+      <article class="card card--serif">
+        <h3>Serif Editorial</h3>
+        <p>
+          The editorial desk has been interviewing caregivers who juggle shift work and remote learning. This edition features a longform
+          piece on building supportive study pods in apartment buildings, complete with printable planning sheets.
+        </p>
+        <p>
+          We also reprinted a 1968 op-ed by public librarian Anita Cervantes on the radical act of keeping branches open late. Annotations
+          from modern staff highlight how many challenges still resonate.
+        </p>
+      </article>
+    </section>
+
+    <section aria-labelledby="mono-shadow">
+      <h2 id="mono-shadow">Monospace & Shadows</h2>
+      <div class="grid-2">
+        <article class="card card--mono">
+          <h3>Mono Journal</h3>
+          <p>
+            Mono Journal captures letters from readers who knit, solder, and write firmware late into the night. Each entry includes a hand
+            drawn schematic and a note about the soundtrack that kept them company.
+          </p>
+        </article>
+        <article class="card card--shadow">
+          <h3>Lifted Panel</h3>
+          <p>
+            Lifted Panel reviews the latest adaptive hardware mods: tactile keycaps for screen readers, magnetic cable guides for folks with
+            limited mobility, and printable grips for styluses.
+          </p>
+          <p>
+            <a href="#contrast">Visit the contrast playground</a> or <strong>review the latest metrics</strong> to see how these upgrades change
+            usability scores in real classrooms.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="pattern">
+      <h2 id="pattern">Patterned Surface</h2>
+      <article class="card card--pattern">
+        <h3>Pattern Backdrop</h3>
+        <p>
+          Pattern Backdrop explores textile design techniques that double as sensory regulation tools. We profile artists who weave contrasting
+          textures so readers can trace paths with their fingertips.
+        </p>
+        <p>
+          The featured tutorial teaches how to print repeating motifs with carved potatoes—no studio required. We include tips for adapting the
+          process for classroom use.
+        </p>
+      </article>
+    </section>
+
+    <section aria-labelledby="motion">
+      <h2 id="motion">Motion Elements</h2>
+      <div class="grid-2">
+        <div class="card card--muted" style="position:relative;">
+          <h3>Subtle Animation</h3>
+          <p>
+            This block includes an animated element that slides gently. Reducing motion should stop the animation.
+          </p>
+          <div style="
+            position:absolute;
+            top:1.5rem;
+            right:1.5rem;
+            width:40px;
+            height:40px;
+            background:linear-gradient(135deg, #38bdf8, #0ea5e9);
+            border-radius:50%;
+            animation: float 3s ease-in-out infinite alternate;
+          "></div>
+        </div>
+        <div class="card card--contrast" style="background:#ffffff;	color:#0f172a;">
+          <h3>Anchor Playground</h3>
+          <p>
+            Explore <a href="#features">feature highlights</a> and check out the <strong>latest updates</strong> to verify anchor colour contrast.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      @keyframes float {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(18px);
+        }
+      }
+    </style>
+  </body>
+</html>

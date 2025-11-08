@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<designspace format="4.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="400" maximum="700" default="400">
+      <map input="400" output="400"/>
+      <map input="700" output="700"/>
+    </axis>
+    <axis tag="FLOW" name="Flow" minimum="0" maximum="1" default="0"/>
+  </axes>
+  <sources>
+    <source filename="EasyTypeSans-VF-F0W400.ttf" name="F0W400">
+      <location>
+        <dimension name="Weight" xvalue="400"/>
+        <dimension name="Flow"   xvalue="0"/>
+      </location>
+      <copyLib>true</copyLib>
+      <copyInfo>true</copyInfo>
+      <copyFeatures>true</copyFeatures>
+    </source>
+    <source filename="EasyTypeSans-VF-F1W400.ttf" name="F1W400">
+      <location>
+        <dimension name="Weight" xvalue="400"/>
+        <dimension name="Flow"   xvalue="1"/>
+      </location>
+    </source>
+    <source filename="EasyTypeSans-VF-F0W700.ttf" name="F0W700">
+      <location>
+        <dimension name="Weight" xvalue="700"/>
+        <dimension name="Flow"   xvalue="0"/>
+      </location>
+    </source>
+    <source filename="EasyTypeSans-VF-F1W700.ttf" name="F1W700">
+      <location>
+        <dimension name="Weight" xvalue="700"/>
+        <dimension name="Flow"   xvalue="1"/>
+      </location>
+    </source>
+  </sources>
+  <instances>
+    <!-- Named instances: Regular, Medium, Bold at FLOW=1 -->
+    <instance familyname="EasyType Sans" stylename="Regular" filename="EasyTypeSansVF-Instance-Regular.ttf">
+      <location>
+        <dimension name="Weight" xvalue="400"/>
+        <dimension name="Flow"   xvalue="1"/>
+      </location>
+    </instance>
+    <instance familyname="EasyType Sans" stylename="Medium" filename="EasyTypeSansVF-Instance-Medium.ttf">
+      <location>
+        <dimension name="Weight" xvalue="500"/>
+        <dimension name="Flow"   xvalue="1"/>
+      </location>
+    </instance>
+    <instance familyname="EasyType Sans" stylename="Bold" filename="EasyTypeSansVF-Instance-Bold.ttf">
+      <location>
+        <dimension name="Weight" xvalue="700"/>
+        <dimension name="Flow"   xvalue="1"/>
+      </location>
+    </instance>
+  </instances>
+</designspace>
