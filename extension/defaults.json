@@ -1,5 +1,6 @@
 {
   "fontsEnabled": true,
+  "fontFamilyChoice": "open-dyslexic",
   "overlayEnabled": false,
   "overlayColor": "#f7f4d8",
   "overlayOpacity": 0.25,

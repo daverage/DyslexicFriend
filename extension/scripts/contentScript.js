@@ -22,10 +22,37 @@ function clamp(value, min, max) {
   return value;
 }
 
+function normalizeFontChoice(choice) {
+  if (!choice || typeof choice !== 'string') return DEFAULT_FONT_CHOICE;
+  return Object.prototype.hasOwnProperty.call(FONT_STACKS, choice) ? choice : DEFAULT_FONT_CHOICE;
+}
+
+function getFontStack(choice) {
+  const normalized = normalizeFontChoice(choice);
+  return FONT_STACKS[normalized] || FONT_STACKS[DEFAULT_FONT_CHOICE];
+}
+
+function resolveFontChoice() {
+  if (currentSettings && currentSettings.fontFamilyChoice) {
+    return normalizeFontChoice(currentSettings.fontFamilyChoice);
+  }
+  if (DEFAULT_SETTINGS && DEFAULT_SETTINGS.fontFamilyChoice) {
+    return normalizeFontChoice(DEFAULT_SETTINGS.fontFamilyChoice);
+  }
+  return DEFAULT_FONT_CHOICE;
+}
+
 // Helper for optional debug logging controlled by settings.
 function dbg() {}
 
 const FONT_CLASS = 'neuro-friendly-font';
+const DEFAULT_FONT_CHOICE = 'open-dyslexic';
+const FONT_STACKS = {
+  'open-dyslexic': '"OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-dyslexic': '"EasyType Dyslexic","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-focus': '"EasyType Focus","EasyType Sans","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-sans': '"EasyType Sans","Atkinson Hyperlegible",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
+};
 const STYLE_ELEMENT_ID = 'neuro-friendly-style';
 const OVERLAY_ID = 'neuro-friendly-overlay';
 const FOCUS_OVERLAY_ID = 'neuro-friendly-focus-overlay';
@@ -608,6 +635,14 @@ function ensureReduceMotionStyle() {
 function applyFontPreference() {
   const root = document.documentElement;
   if (!root) return;
+  try {
+    const stack = getFontStack(resolveFontChoice());
+    if (stack) {
+      root.style.setProperty('--neuro-friendly-font', stack);
+    }
+  } catch (err) {
+    // ignore style issues
+  }
 
   if (currentSettings.fontsEnabled) {
     ensureStyleElement();
@@ -1941,6 +1976,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return false;
 
   switch (message.type) {
+    case 'neuroFriendlyFontChoiceChanged': {
+      const choice = message.payload?.fontFamilyChoice;
+      if (choice) {
+        currentSettings.fontFamilyChoice = choice;
+        applyFontPreference();
+      }
+      sendResponse({ ok: true });
+      return true;
+    }
     case 'neuroFriendlyUpdateSettings':
       currentSettings = { ...currentSettings, ...message.payload };
       applySettings();

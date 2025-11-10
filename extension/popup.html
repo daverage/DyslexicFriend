@@ -98,14 +98,34 @@
   </div>
   <div class="tab-pane" data-tab="focus" style="display:none;">
                   <!-- === Dyslexia Font === -->
-      <section class="control">
+      <section class="control control--font-picker">
         <label class="switch">
           <input type="checkbox" id="fontsToggle" />
           <span class="slider"></span>
         </label>
         <div class="control__content">
-          <h2>OpenDyslexic font</h2>
-          <p>Replace page fonts with the OpenDyslexic typeface for improved readability.</p>
+          <div class="control__copy">
+            <h2>Reading-friendly fonts</h2>
+            <p>Replace page fonts with OpenDyslexic or EasyType families for improved readability.</p>
+          </div>
+          <label class="input-group input-group--inline font-choice" for="fontChoice">
+            <span>Font style</span>
+            <select id="fontChoice" class="font-choice__select" aria-label="Choose reading-friendly font">
+              <option value="open-dyslexic" style="font-family: var(--nf-font-open-dyslexic);">
+                OpenDyslexic
+              </option>
+              <option value="easytype-dyslexic" style="font-family: 'EasyType Dyslexic', var(--nf-font-open-dyslexic);">
+                EasyType Dyslexic
+              </option>
+              <option value="easytype-focus" style="font-family: 'EasyType Focus', var(--nf-font-open-dyslexic);">
+                EasyType Focus
+              </option>
+              <option value="easytype-sans" style="font-family: 'EasyType Sans', var(--nf-font-open-dyslexic);">
+                EasyType Sans
+              </option>
+            </select>
+          </label>
+          <p class="control__note">Each option previews its own typeface so you can compare styles quickly.</p>
         </div>
       </section>
       <section class="control">

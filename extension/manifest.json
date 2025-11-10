@@ -23,17 +23,20 @@
   "background": {
     "service_worker": "scripts/background.js"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://www.marczewski.me.uk; font-src 'self' data: https://www.marczewski.me.uk https://cdn.jsdelivr.net"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["scripts/contentScript.js"],
-      "css": ["styles/fonts.css"],
+      "css": ["styles/fonts.css", "styles/font-stacks.css"],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["stopwords-iso.json", "defaults.json"],
+      "resources": ["stopwords-iso.json", "defaults.json", "fonts/web/*.woff2"],
       "matches": ["<all_urls>"]
     }
   ],

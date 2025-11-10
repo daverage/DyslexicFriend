@@ -4,6 +4,26 @@ import { hexToRgb, relativeLuminance, contrastRatio } from './scripts/colorUtils
 
 let DEFAULT_SETTINGS = {};
 
+const DEFAULT_FONT_CHOICE = 'open-dyslexic';
+const FONT_STACKS = {
+  'open-dyslexic': '"OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-dyslexic': '"EasyType Dyslexic","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-focus': '"EasyType Focus","EasyType Sans","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'easytype-sans': '"EasyType Sans","Atkinson Hyperlegible",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
+};
+const TYPOGRAPHY_FALLBACKS = {
+  lineHeightOverride: 1.5,
+  letterSpacingOverride: 0.05,
+  paragraphSpacingOverride: 1.2
+};
+
+function getTypographyDefault(key) {
+  const value = DEFAULT_SETTINGS && typeof DEFAULT_SETTINGS[key] === 'number'
+    ? DEFAULT_SETTINGS[key]
+    : TYPOGRAPHY_FALLBACKS[key];
+  return typeof value === 'number' ? value : TYPOGRAPHY_FALLBACKS[key];
+}
+
 async function loadDefaults() {
   try {
     const url = chrome.runtime.getURL('defaults.json');
@@ -25,6 +45,7 @@ async function loadDefaults() {
 const el = (id) => document.getElementById(id);
 const masterToggle = el('masterToggle');
 const fontsToggle = el('fontsToggle');
+const fontChoiceSelect = el('fontChoice');
 const overlayToggle = el('overlayToggle');
 const overlayColor = el('overlayColor');
 const overlayColorHex = el('overlayColorHex');
@@ -279,7 +300,7 @@ function setOverlayControlsDisabled(disabled) {
 function setAllControlsDisabled(disabled) {
   // don't disable masterToggle itself when called from event handler
   const controls = [
-    fontsToggle, overlayToggle, overlayColor, overlayColorHex, overlayColorRed, overlayColorGreen, overlayColorBlue,
+    fontsToggle, fontChoiceSelect, overlayToggle, overlayColor, overlayColorHex, overlayColorRed, overlayColorGreen, overlayColorBlue,
     overlayOpacity, focusToggle, reduceMotionToggle, anchorToggle, anchorSentenceToggle, numberToggle,
     anchorColorCustomToggle, anchorColorModeSelect, anchorColorContrastLevelSelect,
     lineHeightInput, letterSpacingInput, paragraphSpacingInput, typographyToggle,
@@ -303,11 +324,38 @@ function setAllControlsDisabled(disabled) {
   updateAnchorColorUI(highlightEnabled, customEnabled, autoEnabled, getSelectedAnchorColor());
 }
 
-function applyPopupFontState(enabled) {
+function applyPopupFontState(enabled, choice = getCurrentFontChoice()) {
   try {
+    applyPopupFontPreview(choice);
     document.body?.classList.toggle('popup-font-dyslexic', !!enabled);
   } catch (err) {
     // ignore DOM issues
+  }
+}
+
+function normalizeFontChoice(choice) {
+  if (!choice || typeof choice !== 'string') return DEFAULT_FONT_CHOICE;
+  return Object.prototype.hasOwnProperty.call(FONT_STACKS, choice) ? choice : DEFAULT_FONT_CHOICE;
+}
+
+function getCurrentFontChoice() {
+  if (fontChoiceSelect) {
+    return normalizeFontChoice(fontChoiceSelect.value);
+  }
+  return DEFAULT_FONT_CHOICE;
+}
+
+function applyPopupFontPreview(choice) {
+  const normalized = normalizeFontChoice(choice);
+  const stack = FONT_STACKS[normalized] || FONT_STACKS[DEFAULT_FONT_CHOICE];
+  try {
+    document.documentElement?.style.setProperty('--nf-popup-font-preview', stack);
+    if (fontChoiceSelect) {
+      fontChoiceSelect.value = normalized;
+      fontChoiceSelect.style.fontFamily = stack;
+    }
+  } catch (err) {
+    // ignore style issues
   }
 }
 
@@ -427,6 +475,8 @@ function setOverlayColorInputs(color, { persist = false } = {}) {
 
 // === RENDER ===
 function render(s) {
+  const fontChoice = normalizeFontChoice(s.fontFamilyChoice);
+  applyPopupFontPreview(fontChoice);
   fontsToggle.checked = !!s.fontsEnabled;
   overlayToggle.checked = !!s.overlayEnabled;
   setOverlayColorInputs(s.overlayColor || DEFAULT_SETTINGS.overlayColor);
@@ -471,9 +521,9 @@ function render(s) {
 
   applyPopupFontState(s.fontsEnabled);
 
-  lineHeightInput.value = s.lineHeightOverride;
-  letterSpacingInput.value = s.letterSpacingOverride;
-  paragraphSpacingInput.value = s.paragraphSpacingOverride;
+  lineHeightInput.value = typeof s.lineHeightOverride === 'number' ? s.lineHeightOverride : getTypographyDefault('lineHeightOverride');
+  letterSpacingInput.value = typeof s.letterSpacingOverride === 'number' ? s.letterSpacingOverride : getTypographyDefault('letterSpacingOverride');
+  paragraphSpacingInput.value = typeof s.paragraphSpacingOverride === 'number' ? s.paragraphSpacingOverride : getTypographyDefault('paragraphSpacingOverride');
   typographyToggle.checked = !!s.typographyEnabled;
 
   // Keep typography controls disabled when typography is off
@@ -572,6 +622,18 @@ function init() {
 
   // Kick off presence check / injection when popup opens
   ensureContentScriptInActiveTab();
+  function notifyActiveTabSettings(partial) {
+    if (!partial || typeof partial !== 'object') return;
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs?.[0];
+        if (!tab || typeof tab.id !== 'number') return;
+        chrome.tabs.sendMessage(tab.id, { type: 'neuroFriendlyUpdateSettings', payload: partial }, () => {});
+      });
+    } catch (err) {
+      console.warn('notifyActiveTabSettings failed', err);
+    }
+  }
   // Load centralized defaults then render based on sync settings.
   loadDefaults().then(() => {
     // overlay slider limit: use centralized default if available
@@ -586,6 +648,16 @@ function init() {
   fontsToggle?.addEventListener('change', () => {
     applyPopupFontState(fontsToggle.checked);
     persistSettingsDebounced({ fontsEnabled: fontsToggle.checked });
+    notifyActiveTabSettings({ fontsEnabled: fontsToggle.checked });
+  });
+  fontChoiceSelect?.addEventListener('change', () => {
+    const choice = getCurrentFontChoice();
+    applyPopupFontPreview(choice);
+    if (typeof fontsToggle?.checked === 'boolean') {
+      applyPopupFontState(fontsToggle.checked, choice);
+    }
+    persistSettingsDebounced({ fontFamilyChoice: choice });
+    notifyActiveTabSettings({ fontFamilyChoice: choice });
   });
   overlayToggle?.addEventListener('change', () => {
     const enabled = overlayToggle.checked;
@@ -652,18 +724,36 @@ function init() {
     persistSettingsDebounced({ anchorAutoColorEnabled: autoSelected });
   });
   // Typography & spacing
-  lineHeightInput?.addEventListener('change', () => persistSettingsDebounced({ lineHeightOverride: parseFloat(lineHeightInput.value) || 1.5 }));
-  letterSpacingInput?.addEventListener('change', () => persistSettingsDebounced({ letterSpacingOverride: parseFloat(letterSpacingInput.value) || 0.05 }));
-  paragraphSpacingInput?.addEventListener('change', () => persistSettingsDebounced({ paragraphSpacingOverride: parseFloat(paragraphSpacingInput.value) || 1.2 }));
-  typographyToggle?.addEventListener('change', () => persistSettingsDebounced({ typographyEnabled: typographyToggle.checked }));
+  lineHeightInput?.addEventListener('change', () => {
+    const value = parseFloat(lineHeightInput.value);
+    const next = Number.isFinite(value) ? value : getTypographyDefault('lineHeightOverride');
+    persistSettingsDebounced({ lineHeightOverride: next });
+    notifyActiveTabSettings({ lineHeightOverride: next });
+  });
+  letterSpacingInput?.addEventListener('change', () => {
+    const value = parseFloat(letterSpacingInput.value);
+    const next = Number.isFinite(value) ? value : getTypographyDefault('letterSpacingOverride');
+    persistSettingsDebounced({ letterSpacingOverride: next });
+    notifyActiveTabSettings({ letterSpacingOverride: next });
+  });
+  paragraphSpacingInput?.addEventListener('change', () => {
+    const value = parseFloat(paragraphSpacingInput.value);
+    const next = Number.isFinite(value) ? value : getTypographyDefault('paragraphSpacingOverride');
+    persistSettingsDebounced({ paragraphSpacingOverride: next });
+    notifyActiveTabSettings({ paragraphSpacingOverride: next });
+  });
+  typographyToggle?.addEventListener('change', () => {
+    persistSettingsDebounced({ typographyEnabled: typographyToggle.checked });
+    notifyActiveTabSettings({ typographyEnabled: typographyToggle.checked });
+  });
   typographyToggle?.addEventListener('change', () => setTypographyControlsDisabled(!typographyToggle.checked));
 
   // Restore typography defaults
   restoreTypographyBtn?.addEventListener('click', () => {
     const defaults = {
-      lineHeightOverride: DEFAULT_SETTINGS.lineHeightOverride,
-      letterSpacingOverride: DEFAULT_SETTINGS.letterSpacingOverride,
-      paragraphSpacingOverride: DEFAULT_SETTINGS.paragraphSpacingOverride,
+      lineHeightOverride: getTypographyDefault('lineHeightOverride'),
+      letterSpacingOverride: getTypographyDefault('letterSpacingOverride'),
+      paragraphSpacingOverride: getTypographyDefault('paragraphSpacingOverride'),
       typographyEnabled: true
     };
     // update inputs immediately for visual feedback
@@ -672,6 +762,7 @@ function init() {
     if (paragraphSpacingInput) paragraphSpacingInput.value = defaults.paragraphSpacingOverride;
     // persist and notify content script
     persistSettingsDebounced(defaults);
+    notifyActiveTabSettings(defaults);
   });
 
   // Layout & Predictability controls removed
@@ -695,31 +786,31 @@ function init() {
     masterToggle.addEventListener('change', () => {
       const turningOff = masterToggle.checked;
       if (turningOff) {
+        // Disable controls immediately so users get instant visual feedback.
+        setAllControlsDisabled(true);
         // Save current sync settings to local storage
         chrome.storage.sync.get(DEFAULT_SETTINGS, (current) => {
-          chrome.storage.local.set({ nf_saved_settings: current }, () => {
-            // Build an object that forces boolean features off and keep other values intact
-            const offPartial = { masterAllOff: true };
-            BOOLEAN_KEYS_TO_DISABLE.forEach((k) => (offPartial[k] = false));
-            // Persist the off state to sync (will send message to content script)
-            persistSettingsDebounced(offPartial, 0);
-            // Visually disable controls immediately
-            setAllControlsDisabled(true);
-          });
+          const lastError = chrome.runtime?.lastError;
+          const snapshot = { ...DEFAULT_SETTINGS, ...(lastError ? {} : current) };
+          chrome.storage.local.set({ nf_saved_settings: snapshot }, () => {});
+          // Build an object that forces boolean features off and keep other values intact.
+          const offPartial = { masterAllOff: true };
+          BOOLEAN_KEYS_TO_DISABLE.forEach((k) => { offPartial[k] = false; });
+          // Persist the off state to sync (will send message to content script)
+          persistSettingsDebounced(offPartial, 0);
         });
       } else {
         // Restore saved settings from local storage (if available)
         chrome.storage.local.get('nf_saved_settings', (res) => {
-          const saved = res?.nf_saved_settings ?? DEFAULT_SETTINGS;
-          // restore and clear the saved snapshot
-          const restore = { ...saved, masterAllOff: false };
-          chrome.storage.sync.set(restore, () => {
-            chrome.storage.local.remove('nf_saved_settings', () => {
-              // update UI and notify content script
-              render(restore);
-              sendUpdate(restore);
-            });
-          });
+          const lastError = chrome.runtime?.lastError;
+          const savedSnapshot = (!lastError && res && typeof res === 'object') ? res.nf_saved_settings : null;
+          const restore = { ...DEFAULT_SETTINGS, ...(savedSnapshot || {}) };
+          restore.masterAllOff = false;
+          chrome.storage.sync.set(restore, () => {});
+          chrome.storage.local.remove('nf_saved_settings', () => {});
+          // update UI and notify content script immediately so no refresh is needed
+          render(restore);
+          sendUpdate(restore);
         });
       }
     });

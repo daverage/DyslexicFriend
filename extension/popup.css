@@ -1,18 +1,5 @@
-@font-face {
-  font-family: 'OpenDyslexic';
-  src: url('fonts/OpenDyslexic-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'OpenDyslexic';
-  src: url('fonts/OpenDyslexic-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('styles/fonts.css');
+@import url('styles/font-stacks.css');
 
 /* === Base Theme === */
 :root {
@@ -49,7 +36,7 @@ main {
 
 body.popup-font-dyslexic,
 body.popup-font-dyslexic * {
-  font-family: 'OpenDyslexic', 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--nf-popup-font-preview), 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 *,
@@ -94,6 +81,31 @@ p {
 .control__content {
   display: flex;
   flex-direction: column;
+}
+.control--font-picker .control__content {
+  gap: 0.4rem;
+}
+.font-choice {
+  margin: 0;
+  width: 100%;
+}
+.font-choice__select {
+  width: 100%;
+  min-width: 210px;
+  font-size: 0.92rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(61, 90, 254, 0.28);
+  background: rgba(255, 255, 255, 0.9);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.font-choice__select:focus-visible {
+  outline: none;
+  border-color: #3d5afe;
+  box-shadow: 0 0 0 3px rgba(61, 90, 254, 0.2);
+}
+.font-choice__select option {
+  font-size: 0.95rem;
 }
 
 .control__note {
