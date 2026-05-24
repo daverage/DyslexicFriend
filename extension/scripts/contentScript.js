@@ -48,9 +48,9 @@ function dbg() {}
 const FONT_CLASS = 'neuro-friendly-font';
 const DEFAULT_FONT_CHOICE = 'open-dyslexic';
 const FONT_STACKS = {
-  'open-dyslexic': '"OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
-  'easytype-dyslexic': '"EasyType Dyslexic","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
-  'easytype-focus': '"EasyType Focus","EasyType Sans","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'open-dyslexic': "'Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
+  'easytype-dyslexic': "'EasyType Dyslexic','Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
+  'easytype-focus': "'EasyType Focus','EasyType Sans','Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
   'easytype-sans': '"EasyType Sans","Atkinson Hyperlegible",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
 };
 const STYLE_ELEMENT_ID = 'neuro-friendly-style';
@@ -61,21 +61,18 @@ const REDUCE_MOTION_CLASS = 'neuro-friendly-reduce-motion';
 const ANCHOR_WRAPPER_CLASS = 'neuro-friendly-anchor-wrapper';
 const ANCHOR_WRAPPER_ATTR = 'data-nf-anchor-original';
 const ANCHOR_BOLD_CLASS = 'neuro-friendly-anchor-bold';
-const SENTENCE_START_CLASS = 'neuro-friendly-sentence-start';
+const ANCHOR_TAIL_CLASS = 'neuro-friendly-anchor-tail';
 const NUMBER_WRAPPER_CLASS = 'neuro-friendly-number-wrapper';
 const NUMBER_WRAPPER_ATTR = 'data-nf-number-original';
-const NUMBER_HIGHLIGHT_CLASS = 'neuro-friendly-number-highlight';
-const STOPWORDS_RESOURCE_URL = chrome.runtime.getURL('stopwords-iso.json');
-const SENTENCE_PATTERN = /([.!?])\s+(\p{Lu})/gu;
+const ANCHOR_CADENCE_BEAT = 9;
 const INTERACTIVE_SELECTOR = 'a, button, strong, em, [role="button"], [aria-hidden="true"]';
 const TEXT_EXCLUDE_SELECTOR = 'script, style, code, pre, textarea';
 const EXTRA_EXCLUDE_SELECTOR = 'head, template, svg, noscript';
 const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
 const LETTER_OR_NUMBER_PATTERN = /[\p{L}\p{N}]/u;
-const LEADING_PUNCTUATION = /^[^\p{L}\p{N}]+/u;
-const TRAILING_PUNCTUATION = /[^\p{L}\p{N}]+$/u;
-const NUMBER_TOKEN_PATTERN = /^\d[\d.,]*$/;
-const NUMERIC_WORD_PATTERN = /^[0-9][0-9.,%]*$/;
+const WHITESPACE_SPLIT_REGEX = /(\s+)/;
+const WHITESPACE_ONLY_REGEX = /^\s+$/;
+const CADENCE_CHAR_PATTERN = /[\p{L}\p{N}]/gu;
 const HEX_BLACK = '#000000';
 const HEX_WHITE = '#FFFFFF';
 const AUTO_ANCHOR_BASES = ['#2563EB', '#0F172A', '#1098AD', '#F59E0B', '#EF4444', '#F1F5F9'];
@@ -115,6 +112,92 @@ function getAnchorLanguageRules() {
   return {
     anchorRatio: ratio,
     useColorOnly: Boolean(entry && entry.useColorOnly)
+  };
+}
+
+function isGoogleDocsPage() {
+  if (!location || !location.hostname) return false;
+  if (!location.hostname.endsWith('docs.google.com')) return false;
+  return location.pathname.includes('/document/');
+}
+
+function getGoogleDocsIframe() {
+  if (!isGoogleDocsPage()) return null;
+  const iframe = document.querySelector('iframe.docs-texteventtarget-iframe');
+  return iframe || null;
+}
+
+function getGoogleDocsDocument() {
+  const iframe = getGoogleDocsIframe();
+  if (!iframe) return null;
+  try {
+    return iframe.contentDocument || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function getGoogleDocsBody() {
+  const doc = getGoogleDocsDocument();
+  if (!doc) return null;
+  return doc.body || null;
+}
+
+function createCadenceState() {
+  return { current: 0, nextBeat: ANCHOR_CADENCE_BEAT };
+}
+
+function advanceCadenceState(contribution, cadenceState) {
+  if (!cadenceState || !Number.isFinite(contribution) || contribution <= 0) return false;
+  cadenceState.current = Math.max(0, cadenceState.current) + contribution;
+  if (cadenceState.current < cadenceState.nextBeat) return false;
+  while (cadenceState.current >= cadenceState.nextBeat) {
+    cadenceState.nextBeat += ANCHOR_CADENCE_BEAT;
+  }
+  return true;
+}
+
+function countCadenceCharacters(text) {
+  if (!text) return 0;
+  const matches = text.match(CADENCE_CHAR_PATTERN);
+  return matches ? matches.length : 0;
+}
+
+function getAnchorLeadLength(wordLength) {
+  if (!Number.isFinite(wordLength) || wordLength <= 0) return 0;
+  if (wordLength <= 3) return 1;
+  if (wordLength <= 6) return 2;
+  if (wordLength <= 8) return 3;
+  return 4;
+}
+
+function createAnchorNodeFilter() {
+  return {
+    acceptNode(node) {
+      if (!(node instanceof Text)) return NodeFilter.FILTER_REJECT;
+      const parent = node.parentNode;
+      if (!parent || !(parent instanceof Element)) return NodeFilter.FILTER_REJECT;
+      if (!node.textContent || !LETTER_OR_NUMBER_PATTERN.test(node.textContent)) {
+        return NodeFilter.FILTER_SKIP;
+      }
+      if (parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) return NodeFilter.FILTER_REJECT;
+      if (parent.closest(TEXT_EXCLUDE_SELECTOR)) return NodeFilter.FILTER_REJECT;
+      if (parent.closest(EXTRA_EXCLUDE_SELECTOR)) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('nav, header, footer, aside')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest(`[${NUMBER_WRAPPER_ATTR}]`)) return NodeFilter.FILTER_REJECT;
+      const interactive = parent.closest(INTERACTIVE_SELECTOR);
+      if (interactive && interactive.tagName && interactive.tagName.toLowerCase() !== 'a') {
+        return NodeFilter.FILTER_REJECT;
+      }
+      if (parent.closest('input, textarea, select, button, option, optgroup')) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      if (parent.closest('[aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
+      if (parent.isContentEditable || parent.closest('[contenteditable]')) return NodeFilter.FILTER_REJECT;
+      const namespace = parent.namespaceURI;
+      if (namespace && namespace !== HTML_NAMESPACE) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
   };
 }
 // MAX_OVERLAY_OPACITY and focus-related values are now sourced from DEFAULT_SETTINGS
@@ -555,8 +638,6 @@ function ensureStyleElement() {
     styleEl.textContent = `
       .${FONT_CLASS}, .${FONT_CLASS} :not(i):not([class*="icon"]):not([class*="fa-"]) {
         font-family: var(--neuro-friendly-font) !important;
-        letter-spacing: 0.05em;
-        word-spacing: 0.08em;
         font-kerning: normal;
       }
       .${FONT_CLASS} p,
@@ -592,16 +673,8 @@ function ensureStyleElement() {
         letter-spacing: 0.03em;
         min-width:auto!important;
       }
-      .${SENTENCE_START_CLASS} {
-        background-color: rgba(160, 214, 255, 0.7);
-        border-radius: 2px;
-        display: inline;
-        padding: 0 1px;
-      }
-      .${NUMBER_HIGHLIGHT_CLASS} {
-        background-color: rgba(255, 214, 153, 0.7);
-        border-radius: 2px;
-        padding: 0 1px;
+      .${ANCHOR_TAIL_CLASS} {
+        opacity: 0.85;
         display: inline;
       }
     `;
@@ -829,9 +902,6 @@ function detachFocusHandlers() {
   window.removeEventListener('resize', handleFocusResize);
 }
 
-let stopwordsMapCache = null;
-let stopwordsMapPromise = null;
-let anchorRequestId = 0;
 let anchorColorCache = new WeakMap();
 let lastAnchorSettings = {
   anchorsEnabled: null,
@@ -894,74 +964,16 @@ function requestAnchorCoverageCheck() {
   }, 250);
 }
 
-const deferredAnchorTasks = [];
-let deferredAnchorScheduled = false;
-let deferredAnchorListenersAttached = false;
 let anchorVerificationTimer = null;
 let anchorVerificationAttempts = 0;
 const MAX_ANCHOR_VERIFICATION_ATTEMPTS = 4;
 
-function ensureDeferredAnchorListeners() {
-  if (deferredAnchorListenersAttached) return;
-  deferredAnchorListenersAttached = true;
-  const handler = () => scheduleDeferredAnchorProcessing(true);
-  window.addEventListener('scroll', handler, { passive: true });
-  window.addEventListener('resize', handler);
-  window.addEventListener('orientationchange', handler);
-}
-
-function handleAnchorTextNode(node, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers) {
+function handleAnchorTextNode(node, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers, cadenceState) {
   if (!(node instanceof Text)) return;
   if (!node.textContent) return;
   if (!node.parentNode) return;
-  if (anchorsEnabled || sentenceHighlightEnabled) {
-    processSingleTextNode(node, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules);
-  }
-  if (highlightNumbers && currentSettings.numberHighlightEnabled) {
-    highlightNumbersInNode(node);
-  }
-}
-
-function scheduleDeferredAnchorProcessing(priority = false) {
-  if (deferredAnchorTasks.length === 0) {
-    deferredAnchorScheduled = false;
-    return;
-  }
-  if (deferredAnchorScheduled && !priority) return;
-
-  const runChunk = (deadline) => {
-    deferredAnchorScheduled = false;
-    if (!currentSettings.anchorHighlightEnabled && !currentSettings.anchorSentenceHighlightEnabled && !currentSettings.numberHighlightEnabled) {
-      deferredAnchorTasks.length = 0;
-      return;
-    }
-    const hasDeadline = deadline && typeof deadline.timeRemaining === 'function';
-    let processed = 0;
-    while (deferredAnchorTasks.length > 0) {
-      const task = deferredAnchorTasks.shift();
-      if (task?.node?.isConnected) {
-        handleAnchorTextNode(task.node, task.stopwordSet, task.anchorsEnabled, task.sentenceHighlightEnabled, task.anchorRules, task.highlightNumbers);
-      }
-      processed += 1;
-      if (hasDeadline) {
-        if (deadline.timeRemaining() < 5) break;
-      } else if (!priority && processed >= 60) {
-        break;
-      } else if (priority && processed >= 120) {
-        break;
-      }
-    }
-    if (deferredAnchorTasks.length > 0) {
-      scheduleDeferredAnchorProcessing();
-    }
-  };
-
-  deferredAnchorScheduled = true;
-  if (priority || typeof window.requestIdleCallback !== 'function') {
-    setTimeout(() => runChunk(), priority ? 0 : 32);
-  } else {
-    window.requestIdleCallback(runChunk);
-  }
+  if (!anchorsEnabled) return;
+  processSingleTextNode(node, anchorsEnabled, sentenceHighlightEnabled, anchorRules, cadenceState);
 }
 
 function scheduleAnchorVerification(reason) {
@@ -991,231 +1003,71 @@ function scheduleAnchorVerification(reason) {
   }, reason === 'post-toggle' ? 400 : 700);
 }
 
-function processAnchorNodesWithPrioritization(nodes, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers) {
+function processAnchorNodesWithPrioritization(nodes, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers, cadenceState) {
   if (!Array.isArray(nodes) || nodes.length === 0) return;
-  ensureDeferredAnchorListeners();
-
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-  const buffer = Math.max(300, Math.round(viewportHeight * 0.3));
-  const immediate = [];
-  const deferred = [];
+  const workingCadenceState = anchorsEnabled
+    ? (cadenceState || createCadenceState())
+    : null;
 
   nodes.forEach((node) => {
     if (!(node instanceof Text)) return;
-    const parent = node.parentElement || (node.parentNode instanceof Element ? node.parentNode : null);
-    if (!parent || typeof parent.getBoundingClientRect !== 'function') {
-      immediate.push(node);
-      return;
-    }
-    let rect = null;
-    try {
-      rect = parent.getBoundingClientRect();
-    } catch (err) {
-      rect = null;
-    }
-    if (!rect) {
-      immediate.push(node);
-      return;
-    }
-    if (rect.bottom >= -buffer && rect.top <= viewportHeight + buffer) {
-      immediate.push(node);
-    } else {
-      deferred.push(node);
-    }
+    handleAnchorTextNode(node, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers, workingCadenceState);
   });
-
-  immediate.forEach((node) => handleAnchorTextNode(node, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules, highlightNumbers));
-
-  if (!deferred.length) return;
-
-  deferred.forEach((node) => {
-    if (!(node instanceof Text)) return;
-    deferredAnchorTasks.push({
-      node,
-      stopwordSet,
-      anchorsEnabled,
-      sentenceHighlightEnabled,
-      anchorRules,
-      highlightNumbers
-    });
-  });
-
-  scheduleDeferredAnchorProcessing();
-  scheduleAnchorVerification('deferred');
-}
-
-function fetchStopwordsMap() {
-  if (stopwordsMapCache) {
-    return Promise.resolve(stopwordsMapCache);
-  }
-
-  if (!stopwordsMapPromise) {
-    stopwordsMapPromise = fetch(STOPWORDS_RESOURCE_URL)
-      .then((response) => (response.ok ? response.json() : {}))
-      .then((json) => {
-        stopwordsMapCache = json || {};
-        return stopwordsMapCache;
-      })
-      .catch(() => {
-        stopwordsMapCache = {};
-        return stopwordsMapCache;
-      })
-      .finally(() => {
-        stopwordsMapPromise = null;
-      });
-  }
-
-  return stopwordsMapPromise;
 }
 
 // Process a single text node for anchor highlighting (extracted for incremental updates)
-function processSingleTextNode(textNode, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules) {
+function processSingleTextNode(textNode, anchorsEnabled, sentenceHighlightEnabled, anchorRules, cadenceState) {
+  if (!anchorsEnabled) return;
   const originalText = textNode.textContent;
-  if (!originalText?.trim()) {
-    return;
-  }
+  if (!originalText?.trim()) return;
 
-  const stopwords = stopwordSet instanceof Set ? stopwordSet : new Set();
   const rules = anchorRules || getAnchorLanguageRules();
-  const baseRatio = typeof rules?.anchorRatio === 'number' ? rules.anchorRatio : ANCHOR_LANGUAGE_RULES.default.anchorRatio;
-  const anchorRatio = clamp(baseRatio, 0.2, 0.6);
   const useColorOnly = Boolean(rules && rules.useColorOnly);
-  const anchorsAllowed = anchorsEnabled && !useColorOnly;
+  if (useColorOnly) return;
 
-  const sentenceStartPositions = new Set();
-  if (sentenceHighlightEnabled) {
-    let match;
-    while ((match = SENTENCE_PATTERN.exec(originalText)) !== null) {
-      const index = match.index + match[0].length - 1;
-      if (Number.isFinite(index)) {
-        sentenceStartPositions.add(index);
-      }
+  const cadence = cadenceState || createCadenceState();
+  const tokens = originalText.split(WHITESPACE_SPLIT_REGEX);
+  const fragment = document.createDocumentFragment();
+  let mutated = false;
+
+  tokens.forEach((token) => {
+    if (!token) return;
+    if (WHITESPACE_ONLY_REGEX.test(token)) {
+      fragment.appendChild(document.createTextNode(token));
+      return;
     }
-    SENTENCE_PATTERN.lastIndex = 0;
-  }
-
-  const parts = originalText.split(/(\s+)/);
-  const spans = [];
-  let charIndex = 0;
-
-  parts.forEach((part) => {
-    if (/^\s+$/.test(part)) {
-      spans.push(document.createTextNode(part));
-      charIndex += part.length;
+    if (!LETTER_OR_NUMBER_PATTERN.test(token)) {
+      fragment.appendChild(document.createTextNode(token));
       return;
     }
 
-    const trimmed = part.trim();
-    if (!trimmed) {
-      spans.push(document.createTextNode(part));
-      charIndex += part.length;
+    const contribution = countCadenceCharacters(token);
+    const shouldAnchor = cadence && contribution > 0
+      ? advanceCadenceState(contribution, cadence)
+      : false;
+
+    if (!shouldAnchor) {
+      fragment.appendChild(document.createTextNode(token));
       return;
     }
 
-    if (!LETTER_OR_NUMBER_PATTERN.test(trimmed)) {
-      spans.push(document.createTextNode(part));
-      charIndex += part.length;
-      return;
+    mutated = true;
+    const leadLength = Math.min(token.length, Math.max(1, getAnchorLeadLength(token.length)));
+    const leadSpan = document.createElement('span');
+    leadSpan.className = ANCHOR_BOLD_CLASS;
+    leadSpan.textContent = token.slice(0, leadLength);
+    queueAnchorColorNode(leadSpan);
+    fragment.appendChild(leadSpan);
+
+    if (leadLength < token.length) {
+      const tailSpan = document.createElement('span');
+      tailSpan.className = ANCHOR_TAIL_CLASS;
+      tailSpan.textContent = token.slice(leadLength);
+      fragment.appendChild(tailSpan);
     }
-
-    const leading = trimmed.match(LEADING_PUNCTUATION)?.[0] ?? '';
-    const trailing = trimmed.match(TRAILING_PUNCTUATION)?.[0] ?? '';
-    const coreStart = leading.length;
-    const coreEnd = trimmed.length - trailing.length;
-    const core = trimmed.slice(coreStart, coreEnd > coreStart ? coreEnd : trimmed.length);
-
-    if (!core) {
-      spans.push(document.createTextNode(part));
-      charIndex += part.length;
-      return;
-    }
-
-    const sanitizedLower = core.toLowerCase();
-    const isStopword = sanitizedLower ? stopwords.has(sanitizedLower) : false;
-    const isNumericWord = NUMERIC_WORD_PATTERN.test(core);
-    const highlightStart = sentenceHighlightEnabled && sentenceStartPositions.has(charIndex + leading.length);
-    const isShortWord = core.length < 3;
-
-    if (isNumericWord) {
-      const numberSpan = document.createElement('span');
-      numberSpan.className = ANCHOR_BOLD_CLASS;
-      numberSpan.textContent = core;
-      numberSpan.style.fontWeight = '400';
-      numberSpan.dataset.nfAnchorNumeric = 'true';
-      queueAnchorColorNode(numberSpan);
-      spans.push(numberSpan);
-      if (trailing) {
-        spans.push(document.createTextNode(trailing));
-      }
-      charIndex += part.length;
-      return;
-    }
-
-    let anchorLength = 0;
-    if (anchorsAllowed && !isStopword && !isShortWord) {
-      const rawAnchor = Math.ceil(core.length * anchorRatio);
-      anchorLength = clamp(rawAnchor, 1, Math.max(1, core.length - 1));
-    }
-
-    if (leading) {
-      spans.push(document.createTextNode(leading));
-    }
-
-    if (!anchorLength) {
-      if (highlightStart) {
-        const startSpan = document.createElement('span');
-        startSpan.className = SENTENCE_START_CLASS;
-        startSpan.textContent = core.charAt(0);
-        queueAnchorColorNode(startSpan);
-        spans.push(startSpan);
-        if (core.length > 1) {
-          spans.push(document.createTextNode(core.slice(1)));
-        }
-      } else {
-        spans.push(document.createTextNode(core));
-      }
-    } else if (highlightStart) {
-      const startSpan = document.createElement('span');
-      startSpan.className = SENTENCE_START_CLASS;
-      startSpan.textContent = core.charAt(0);
-      queueAnchorColorNode(startSpan);
-      spans.push(startSpan);
-      const remainingAnchorLength = Math.max(0, anchorLength - 1);
-      if (remainingAnchorLength > 0) {
-        const remainderBold = document.createElement('span');
-        remainderBold.className = ANCHOR_BOLD_CLASS;
-        remainderBold.textContent = core.slice(1, 1 + remainingAnchorLength);
-        queueAnchorColorNode(remainderBold);
-        spans.push(remainderBold);
-      }
-      const textStartIndex = 1 + Math.max(0, anchorLength - 1);
-      if (core.length > textStartIndex) {
-        spans.push(document.createTextNode(core.slice(textStartIndex)));
-      }
-    } else {
-      const boldSpan = document.createElement('span');
-      boldSpan.className = ANCHOR_BOLD_CLASS;
-      boldSpan.textContent = core.slice(0, anchorLength);
-      queueAnchorColorNode(boldSpan);
-      spans.push(boldSpan);
-      if (core.length > anchorLength) {
-        spans.push(document.createTextNode(core.slice(anchorLength)));
-      }
-    }
-
-    if (trailing) {
-      spans.push(document.createTextNode(trailing));
-    }
-
-    charIndex += part.length;
   });
 
-  if (spans.every((node) => node instanceof Text)) {
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  spans.forEach((node) => fragment.appendChild(node));
+  if (!mutated) return;
 
   const wrapper = document.createElement('span');
   wrapper.className = ANCHOR_WRAPPER_CLASS;
@@ -1237,168 +1089,35 @@ function processSingleTextNode(textNode, stopwordSet, anchorsEnabled, sentenceHi
 // Incremental processing for added subtrees: process text nodes and numbers inside the subtree only.
 function processAddedTextNodes(root) {
   if (!root) return;
-  const scope = root instanceof Node ? root : document;
-  // collect text nodes
-  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      if (!(node instanceof Text)) return NodeFilter.FILTER_REJECT;
-      const parent = node.parentNode;
-      if (!parent || !(parent instanceof Element)) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(TEXT_EXCLUDE_SELECTOR)) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(EXTRA_EXCLUDE_SELECTOR)) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(`.${NUMBER_HIGHLIGHT_CLASS}`)) return NodeFilter.FILTER_REJECT;
-      const interactive = parent.closest(INTERACTIVE_SELECTOR);
-      if (interactive && interactive.tagName && interactive.tagName.toLowerCase() !== 'a') {
-        return NodeFilter.FILTER_REJECT;
-      }
-      if (parent.closest('input, select, textarea, button')) return NodeFilter.FILTER_REJECT;
-      if (parent.closest('[aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
-      const namespace = parent.namespaceURI;
-      if (namespace && namespace !== HTML_NAMESPACE) return NodeFilter.FILTER_REJECT;
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-
-  const textNodes = [];
-  while (walker.nextNode()) textNodes.push(walker.currentNode);
-  if (textNodes.length === 0) return;
-
-  // Fetch stopwords and then process nodes
-  fetchStopwordsMap().then((map) => {
-    const language = getLanguageCode();
-    const defaultLang = (DEFAULT_SETTINGS && DEFAULT_SETTINGS.defaultStopwordLang) ? DEFAULT_SETTINGS.defaultStopwordLang : 'en';
-    const stopwords = Array.isArray(map?.[language]) ? map[language] : Array.isArray(map?.[defaultLang]) ? map[defaultLang] : [];
-    const stopwordSet = new Set(stopwords.map((w) => String(w).toLowerCase()));
-    const anchorsEnabled = Boolean(currentSettings.anchorHighlightEnabled);
-    const sentenceHighlightEnabled = Boolean(currentSettings.anchorSentenceHighlightEnabled);
-    const anchorRules = getAnchorLanguageRules();
-    processAnchorNodesWithPrioritization(textNodes, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules, true);
-  }).catch(() => {
-    // fallback: run general rescans
-    scheduleTextFeatureRescan();
-  });
+  scheduleTextFeatureRescan();
 }
 
 function clearAnchorHighlights() {
-  const wrappers = document.querySelectorAll(`.${ANCHOR_WRAPPER_CLASS}`);
-  wrappers.forEach((wrapper) => {
-    const original = wrapper.getAttribute(ANCHOR_WRAPPER_ATTR);
-    const fallback = wrapper.textContent || '';
-    const textNode = document.createTextNode(original ?? fallback);
-    wrapper.replaceWith(textNode);
+  const docs = [document, getGoogleDocsDocument()].filter(Boolean);
+  docs.forEach((doc) => {
+    doc.querySelectorAll(`.${ANCHOR_WRAPPER_CLASS}`).forEach((wrapper) => {
+      const original = wrapper.getAttribute(ANCHOR_WRAPPER_ATTR);
+      const fallback = wrapper.textContent || '';
+      const textNode = doc.createTextNode(original ?? fallback);
+      wrapper.replaceWith(textNode);
+    });
   });
 }
 
 function clearNumberHighlights() {
-  const wrappers = document.querySelectorAll(`.${NUMBER_WRAPPER_CLASS}[${NUMBER_WRAPPER_ATTR}]`);
-  wrappers.forEach((wrapper) => {
-    const original = wrapper.getAttribute(NUMBER_WRAPPER_ATTR);
-    const fallback = wrapper.textContent || '';
-    const textNode = document.createTextNode(original ?? fallback);
-    wrapper.replaceWith(textNode);
+  const docs = [document, getGoogleDocsDocument()].filter(Boolean);
+  docs.forEach((doc) => {
+    doc.querySelectorAll(`.${NUMBER_WRAPPER_CLASS}[${NUMBER_WRAPPER_ATTR}]`).forEach((wrapper) => {
+      const original = wrapper.getAttribute(NUMBER_WRAPPER_ATTR);
+      const fallback = wrapper.textContent || '';
+      const textNode = doc.createTextNode(original ?? fallback);
+      wrapper.replaceWith(textNode);
+    });
   });
-}
-
-function highlightNumbersInNode(node) {
-  const text = node.textContent;
-  if (!text || !/\d/.test(text)) {
-    return;
-  }
-
-  const parent = node.parentNode;
-  if (!parent) return;
-
-  const wrapper = document.createElement('span');
-  wrapper.className = NUMBER_WRAPPER_CLASS;
-  wrapper.setAttribute(NUMBER_WRAPPER_ATTR, text);
-
-  const parts = text.split(/(\d[\d.,]*)/);
-  parts.forEach((part) => {
-    if (!part) {
-      return;
-    }
-
-    if (NUMBER_TOKEN_PATTERN.test(part)) {
-      const span = document.createElement('span');
-      span.className = NUMBER_HIGHLIGHT_CLASS;
-      span.textContent = part;
-      wrapper.appendChild(span);
-    } else {
-      wrapper.appendChild(document.createTextNode(part));
-    }
-  });
-
-  parent.replaceChild(wrapper, node);
 }
 
 function applyNumberHighlightPreference() {
   clearNumberHighlights();
-
-  if (!currentSettings.numberHighlightEnabled) {
-    return;
-  }
-
-  const root = document.body || document.documentElement;
-  if (!root) return;
-
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      if (!node?.parentNode) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      const parent = node.parentNode;
-      if (!(parent instanceof Element)) {
-        return NodeFilter.FILTER_SKIP;
-      }
-
-      if (!node.textContent || !/\d/.test(node.textContent)) {
-        return NodeFilter.FILTER_SKIP;
-      }
-
-      if (parent.closest(TEXT_EXCLUDE_SELECTOR)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      if (parent.closest(EXTRA_EXCLUDE_SELECTOR)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest(`.${NUMBER_HIGHLIGHT_CLASS}`)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      const interactive = parent.closest(INTERACTIVE_SELECTOR);
-      if (interactive && interactive.tagName && interactive.tagName.toLowerCase() !== 'a') {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest('input, select')) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.hasAttribute('aria-hidden') && parent.getAttribute('aria-hidden') === 'true') {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.isContentEditable) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-
-  const nodes = [];
-  while (walker.nextNode()) {
-    nodes.push(walker.currentNode);
-  }
-
-  nodes.forEach((textNode) => {
-    if (textNode instanceof Text) {
-      highlightNumbersInNode(textNode);
-    }
-  });
 }
 
 function getLanguageCode() {
@@ -1408,88 +1127,74 @@ function getLanguageCode() {
   return code || defaultLang;
 }
 
-function highlightAnchorsWithStopwords(stopwords, options) {
-  const { anchorsEnabled, sentenceHighlightEnabled } = options;
+function highlightAnchors({ anchorsEnabled, sentenceHighlightEnabled }) {
   if (!anchorsEnabled && !sentenceHighlightEnabled) {
     return;
   }
 
-  const stopwordList = Array.isArray(stopwords) ? stopwords : [];
-  const stopwordSet = new Set(stopwordList.map((word) => word.toLowerCase()));
-  const root = document.body || document.documentElement;
-  if (!root) {
-    return;
-  }
+  const contexts = [];
+  const defaultRoot = document.body || document.documentElement;
+  if (defaultRoot) contexts.push({ type: 'default', root: defaultRoot });
+  const gdocsRoot = getGoogleDocsBody();
+  if (gdocsRoot) contexts.push({ type: 'gdocs', root: gdocsRoot });
 
-  // Use processSingleTextNode for individual node processing (incremental updates)
+  if (!contexts.length) return;
 
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      if (!(node instanceof Text)) {
-        return NodeFilter.FILTER_REJECT;
-      }
+  const anchorRules = getAnchorLanguageRules();
 
-      const parent = node.parentNode;
-      if (!parent || !(parent instanceof Element)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (!node.textContent || !LETTER_OR_NUMBER_PATTERN.test(node.textContent)) {
-        return NodeFilter.FILTER_SKIP;
-      }
-
-      if (parent.classList.contains(ANCHOR_WRAPPER_CLASS) || parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest(TEXT_EXCLUDE_SELECTOR)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest('nav, header, footer, aside')) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      const interactive = parent.closest(INTERACTIVE_SELECTOR);
-      if (interactive && interactive.tagName && interactive.tagName.toLowerCase() !== 'a') {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest('input, textarea, select, button, option, optgroup')) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest(`.${NUMBER_HIGHLIGHT_CLASS}`)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.isContentEditable || parent.closest('[contenteditable]')) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      if (parent.closest('[aria-hidden="true"]')) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      const namespace = parent.namespaceURI;
-      if (namespace && namespace !== HTML_NAMESPACE) {
-        return NodeFilter.FILTER_REJECT;
-      }
-
-      return NodeFilter.FILTER_ACCEPT;
-    }
+  contexts.forEach((ctx) => {
+    const nodes = ctx.type === 'gdocs'
+      ? collectGoogleDocsNodes(ctx.root)
+      : collectDocumentNodes(ctx.root);
+    if (!nodes.length) return;
+    const cadenceState = anchorsEnabled ? createCadenceState() : null;
+    processAnchorNodesWithPrioritization(nodes, anchorsEnabled, sentenceHighlightEnabled, anchorRules, false, cadenceState);
   });
+}
 
-  const nodesToProcess = [];
+function collectDocumentNodes(root) {
+  if (!root || !root.ownerDocument) return [];
+  const doc = root.ownerDocument;
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, createAnchorNodeFilter());
+  const nodes = [];
   while (walker.nextNode()) {
     const current = walker.currentNode;
     if (current instanceof Text) {
-      nodesToProcess.push(current);
+      nodes.push(current);
     }
   }
+  return nodes;
+}
 
-  const anchorRules = getAnchorLanguageRules();
-  processAnchorNodesWithPrioritization(nodesToProcess, stopwordSet, anchorsEnabled, sentenceHighlightEnabled, anchorRules, false);
+function collectGoogleDocsNodes(root) {
+  if (!root || !root.ownerDocument) return [];
+  const doc = root.ownerDocument;
+  const paragraphs = root.querySelectorAll('.kix-paragraphrenderer');
+  if (!paragraphs.length) return [];
+  const nodes = [];
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const buffer = Math.max(300, Math.round(viewportHeight * 0.4));
+  const filter = createAnchorNodeFilter();
+
+  paragraphs.forEach((para) => {
+    let rect;
+    try {
+      rect = para.getBoundingClientRect();
+    } catch (err) {
+      rect = null;
+    }
+    if (!rect) return;
+    if (rect.bottom < -buffer || rect.top > viewportHeight + buffer) return;
+    const walker = doc.createTreeWalker(para, NodeFilter.SHOW_TEXT, filter);
+    while (walker.nextNode()) {
+      const current = walker.currentNode;
+      if (current instanceof Text) {
+        nodes.push(current);
+      }
+    }
+  });
+
+  return nodes;
 }
 
 function applyAnchorHighlightPreference() {
@@ -1524,28 +1229,13 @@ function applyAnchorHighlightPreference() {
 
   clearAnchorHighlights();
 
-  const requestId = ++anchorRequestId;
-
-  fetchStopwordsMap().then((map) => {
-    if (requestId !== anchorRequestId) {
-      return;
-    }
-
-    const language = getLanguageCode();
-    const defaultLang = (DEFAULT_SETTINGS && DEFAULT_SETTINGS.defaultStopwordLang) ? DEFAULT_SETTINGS.defaultStopwordLang : 'en';
-    const stopwords = Array.isArray(map?.[language])
-      ? map[language]
-      : Array.isArray(map?.[defaultLang])
-        ? map[defaultLang]
-        : [];
-
-    highlightAnchorsWithStopwords(stopwords, {
-      anchorsEnabled,
-      sentenceHighlightEnabled
-    });
+  try {
+    highlightAnchors({ anchorsEnabled, sentenceHighlightEnabled });
     requestAnchorCoverageCheck();
     scheduleAnchorVerification('post-apply');
-  });
+  } catch (err) {
+    scheduleTextFeatureRescan();
+  }
 }
 
 function applyOverlayPreference() {
@@ -1674,6 +1364,8 @@ function applyBreakReminder() {
 // Mutation observer helpers
 // -------------------------
 let globalMutationObserver = null;
+let googleDocsObserver = null;
+let googleDocsFrameMonitor = null;
 let pendingTextRescan = null;
 let pendingMediaScan = null;
 const processedMedia = new WeakSet();
@@ -1837,6 +1529,26 @@ function ensureGlobalMutationObserver() {
   return globalMutationObserver;
 }
 
+function ensureGoogleDocsObserver() {
+  if (googleDocsObserver) return googleDocsObserver;
+  try {
+    googleDocsObserver = new MutationObserver(observerCallback);
+  } catch (err) {
+    googleDocsObserver = null;
+  }
+  return googleDocsObserver;
+}
+
+function disconnectGoogleDocsObserver() {
+  if (!googleDocsObserver) return;
+  try {
+    googleDocsObserver.disconnect();
+  } catch (err) {
+    console.error('GoogleDocs observer disconnect failed', err);
+  }
+  googleDocsObserver = null;
+}
+
 function updateMutationObserverState() {
   const needsObserver = !!(
     currentSettings.disableAutoPlayMedia ||
@@ -1866,6 +1578,47 @@ function updateMutationObserverState() {
     } catch (err) {
       console.error('MutationObserver.disconnect failed', err);
     }
+  }
+
+  updateGoogleDocsObserverState(needsObserver);
+}
+
+function updateGoogleDocsObserverState(needsObserver) {
+  if (!isGoogleDocsPage()) {
+    disconnectGoogleDocsObserver();
+    if (googleDocsFrameMonitor) {
+      clearInterval(googleDocsFrameMonitor);
+      googleDocsFrameMonitor = null;
+    }
+    return;
+  }
+
+  if (!needsObserver) {
+    disconnectGoogleDocsObserver();
+    return;
+  }
+
+  const target = getGoogleDocsBody();
+  if (!target) {
+    if (!googleDocsFrameMonitor) {
+      googleDocsFrameMonitor = setInterval(() => {
+        if (getGoogleDocsBody()) {
+          clearInterval(googleDocsFrameMonitor);
+          googleDocsFrameMonitor = null;
+          updateGoogleDocsObserverState(needsObserver);
+          scheduleTextFeatureRescan();
+        }
+      }, 1200);
+    }
+    return;
+  }
+
+  const obs = ensureGoogleDocsObserver();
+  if (!obs) return;
+  try {
+    obs.observe(target, { childList: true, subtree: true, attributes: false });
+  } catch (err) {
+    console.error('GoogleDocs observer failed', err);
   }
 }
 
@@ -1964,7 +1717,6 @@ try {
     apply: () => applyAnchorHighlightPreference(),
     status: () => ({
       wrappers: document.querySelectorAll(`.${ANCHOR_WRAPPER_CLASS}`).length,
-      deferred: deferredAnchorTasks.length,
       attempts: anchorVerificationAttempts
     })
   });

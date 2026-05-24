@@ -1,62 +1,27 @@
 @font-face {
-  font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexic-Regular.woff") format("woff");
+  font-family: 'Open-Dyslexic';
+  src: url('../fonts/opendyslexic/OpenDyslexic-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
-  font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexic-Italic.woff") format("woff");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexic-Bold.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "OpenDyslexic";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexic-BoldItalic.woff") format("woff");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "OpenDyslexicAlta";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexicAlta-Regular.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "OpenDyslexicAlta";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexicAlta-Italic.woff") format("woff");
+  font-family: 'Open-Dyslexic';
+  src: url('../fonts/opendyslexic/OpenDyslexic-Italic.woff2') format('woff2');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
-
 @font-face {
-  font-family: "OpenDyslexicAlta";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexicAlta-Bold.woff") format("woff");
+  font-family: 'Open-Dyslexic';
+  src: url('../fonts/opendyslexic/OpenDyslexic-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
-  font-family: "OpenDyslexicAlta";
-  src: url("https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic@v0.911/woff/OpenDyslexicAlta-BoldItalic.woff") format("woff");
+  font-family: 'Open-Dyslexic';
+  src: url('../fonts/opendyslexic/OpenDyslexic-Bold-Italic.woff2') format('woff2');
   font-weight: 700;
   font-style: italic;
   font-display: swap;

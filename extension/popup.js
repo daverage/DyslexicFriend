@@ -6,9 +6,9 @@ let DEFAULT_SETTINGS = {};
 
 const DEFAULT_FONT_CHOICE = 'open-dyslexic';
 const FONT_STACKS = {
-  'open-dyslexic': '"OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
-  'easytype-dyslexic': '"EasyType Dyslexic","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
-  'easytype-focus': '"EasyType Focus","EasyType Sans","OpenDyslexic","OpenDyslexicAlta",Arial,sans-serif',
+  'open-dyslexic': "'Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
+  'easytype-dyslexic': "'EasyType Dyslexic','Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
+  'easytype-focus': "'EasyType Focus','EasyType Sans','Open-Dyslexic','Open-Dyslexic Alta','OpenDyslexic','OpenDyslexicAlta',Arial,sans-serif",
   'easytype-sans': '"EasyType Sans","Atkinson Hyperlegible",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
 };
 const TYPOGRAPHY_FALLBACKS = {

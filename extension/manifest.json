@@ -36,7 +36,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["stopwords-iso.json", "defaults.json", "fonts/web/*.woff2"],
+      "resources": [
+        "stopwords-iso.json",
+        "defaults.json",
+        "fonts/web/*.woff2",
+        "fonts/opendyslexic/*.woff2"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AnchorFlow Page Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/open-dyslexic" />
+  <link rel="stylesheet" href="https://www.marczewski.me.uk/easytype/css/easytype.css?v=1.0.0" />
+  <style>
+    :root {
+      --bg: #eff3f8;
+      --card: #fff;
+      --text: #0f172a;
+      --muted: #5b6475;
+      --lead-color: #0d5c8d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'EasyType Sans', 'Open-Dyslexic', 'Open-Dyslexic Alta', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 24px;
+    }
+    header {
+      max-width: 960px;
+      margin: 0 auto 16px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    header h1 {
+      margin: 0 0 8px;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+    .controls label {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    select, button, input[type=color] {
+      font-size: 0.95rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5f5;
+      padding: 6px 12px;
+      background: #f8fafc;
+    }
+    button {
+      cursor: pointer;
+      background: var(--lead-color);
+      color: #fff;
+      border: none;
+      box-shadow: 0 6px 18px rgba(13, 92, 141, 0.3);
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--card);
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+      font-size: 1.08rem;
+    }
+    .af-lead {
+      font-weight: 700;
+      color: var(--lead-color);
+      letter-spacing: 0.02em;
+    }
+    .af-tail {
+      opacity: 0.88;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AnchorFlow full-page demo</h1>
+    <p>This page runs the exact same cadence code as the extension. Toggle AnchorFlow on/off and the extension should produce identical highlighting.</p>
+    <div class="controls">
+      <label><input type="checkbox" id="toggle" checked /> AnchorFlow on</label>
+      <label>Font
+        <select id="font">
+          <option value="easytype">EasyType Sans</option>
+          <option value="opendys">OpenDyslexic</option>
+          <option value="system">System sans</option>
+        </select>
+      </label>
+      <label>Tint
+        <input type="color" id="tint" value="#0d5c8d" />
+      </label>
+      <button id="reapply" type="button">Reapply cadence</button>
+    </div>
+  </header>
+
+  <main id="content">
+    <p>The old clock in the town square chimed noon, a sound that echoed through the narrow cobblestone streets. A young boy, no older than ten, sat on a bench, his eyes fixed on a small, worn leather-bound book. He wasn't reading, but tracing the embossed letters on the cover with a hesitant finger.</p>
+    <p>He had found it tucked away in a chest in his grandmother's attic, a treasure trove of forgotten stories. The book promised adventure, of a sort he'd only dreamed of. He knew, with a certainty that only a child could possess, that his life was about to change.</p>
+    <p>Elsewhere, a train rattled toward the coast, each carriage filled with travelers seeking their own quiet revolutions. A painter watched the light shift across the sea, sketching as fast as the morning would allow. A teacher prepared a classroom, aligning fresh notebooks, hoping this group might meet the world with gentle ferocity.</p>
+    <p>AnchorFlow is about creating predictable beats for the eye. Every nine letters, regardless of word or punctuation, we deliver a lead-in. Short words get a single letter, mid words gain two or three, and long words soften with four. The rhythm stays constant, so readers can relax into the text.</p>
+  </main>
+
+  <script>
+    const ANCHOR_WRAPPER_CLASS = 'af-wrapper';
+    const ANCHOR_WRAPPER_ATTR = 'data-af-original';
+    const ANCHOR_BOLD_CLASS = 'af-lead';
+    const ANCHOR_TAIL_CLASS = 'af-tail';
+    const BEAT = 9;
+    const LETTER_PATTERN = /[\p{L}\p{N}]/u;
+    const SPLIT_REGEX = /(\s+)/;
+    const WHITESPACE_ONLY_REGEX = /^\s+$/;
+
+    const FONT_STACKS = {
+      easytype: "'EasyType Sans','Open-Dyslexic','Open-Dyslexic Alta',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+      opendys: "'Open-Dyslexic','Open-Dyslexic Alta',Arial,sans-serif",
+      system: "system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    };
+
+    const toggleEl = document.getElementById('toggle');
+    const fontEl = document.getElementById('font');
+    const tintEl = document.getElementById('tint');
+    const reapplyBtn = document.getElementById('reapply');
+    const contentEl = document.getElementById('content');
+
+    function countChars(token) {
+      return (token.match(/[\p{L}\p{N}]/gu) || []).length;
+    }
+
+    function getLeadLength(len) {
+      if (len <= 3) return 1;
+      if (len <= 6) return 2;
+      if (len <= 8) return 3;
+      return 4;
+    }
+
+    function clearAnchors() {
+      document.querySelectorAll(`.${ANCHOR_WRAPPER_CLASS}`).forEach((wrapper) => {
+        const original = wrapper.getAttribute(ANCHOR_WRAPPER_ATTR);
+        if (original == null) return;
+        const textNode = document.createTextNode(original);
+        wrapper.replaceWith(textNode);
+      });
+    }
+
+    function processTextNode(node, cadence, color) {
+      const originalText = node.textContent;
+      if (!originalText?.trim()) return;
+
+      const tokens = originalText.split(SPLIT_REGEX);
+      const fragment = document.createDocumentFragment();
+      let mutated = false;
+
+      tokens.forEach((token) => {
+        if (!token) return;
+        if (WHITESPACE_ONLY_REGEX.test(token)) {
+          fragment.appendChild(document.createTextNode(token));
+          return;
+        }
+        if (!LETTER_PATTERN.test(token)) {
+          fragment.appendChild(document.createTextNode(token));
+          return;
+        }
+
+        cadence.current += countChars(token);
+        let highlight = false;
+        if (cadence.current >= cadence.nextBeat) {
+          highlight = true;
+          while (cadence.current >= cadence.nextBeat) {
+            cadence.nextBeat += BEAT;
+          }
+        }
+
+        if (!highlight) {
+          fragment.appendChild(document.createTextNode(token));
+          return;
+        }
+
+        mutated = true;
+        const leadLen = Math.min(token.length, Math.max(1, getLeadLength(token.length)));
+        const lead = document.createElement('span');
+        lead.className = ANCHOR_BOLD_CLASS;
+        lead.textContent = token.slice(0, leadLen);
+        lead.style.color = color;
+
+        const tail = document.createElement('span');
+        tail.className = ANCHOR_TAIL_CLASS;
+        tail.textContent = token.slice(leadLen);
+
+        const wrapper = document.createElement('span');
+        wrapper.appendChild(lead);
+        wrapper.appendChild(tail);
+        fragment.appendChild(wrapper);
+      });
+
+      if (!mutated) return;
+
+      const outer = document.createElement('span');
+      outer.className = ANCHOR_WRAPPER_CLASS;
+      outer.setAttribute(ANCHOR_WRAPPER_ATTR, originalText);
+      outer.style.display = 'inline';
+      outer.appendChild(fragment);
+      node.parentNode?.replaceChild(outer, node);
+    }
+
+    const SKIP_SELECTOR = 'script, style, code, pre, textarea';
+    const EXTRA_SKIP_SELECTOR = 'nav, header, footer, aside';
+    const FORM_SKIP_SELECTOR = 'input, textarea, select, button, option, optgroup';
+    const INTERACTIVE_SELECTOR = 'button, [role="button"], [aria-hidden="true"]';
+
+    function applyAnchors() {
+      clearAnchors();
+      if (!toggleEl.checked) return;
+
+      const color = tintEl.value || '#0d5c8d';
+      document.documentElement.style.setProperty('--lead-color', color);
+
+      const cadence = { current: 0, nextBeat: BEAT };
+      const scope = document.body;
+      const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!(node instanceof Text)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentNode;
+          if (!parent || !(parent instanceof Element)) return NodeFilter.FILTER_REJECT;
+          if (!node.textContent || !LETTER_PATTERN.test(node.textContent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest(EXTRA_SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest(FORM_SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
+          const interactive = parent.closest(INTERACTIVE_SELECTOR);
+          if (interactive && interactive.tagName && interactive.tagName.toLowerCase() !== 'a') return NodeFilter.FILTER_REJECT;
+          if (parent.closest(`.${ANCHOR_WRAPPER_CLASS}`)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach((node) => processTextNode(node, cadence, color));
+    }
+
+    function updateFont() {
+      const stack = FONT_STACKS[fontEl.value] || FONT_STACKS.easytype;
+      document.body.style.fontFamily = stack;
+    }
+
+    toggleEl.addEventListener('change', applyAnchors);
+    fontEl.addEventListener('change', () => { updateFont(); applyAnchors(); });
+    tintEl.addEventListener('input', applyAnchors);
+    reapplyBtn.addEventListener('click', applyAnchors);
+
+    updateFont();
+    applyAnchors();
+  </script>
+</body>
+</html>
